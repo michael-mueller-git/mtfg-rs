@@ -19,7 +19,7 @@ async fn main() {
     }
 
     let window_name = "mtfg-rs";
-    let channel_capacity = 32;
+    let channel_capacity = 64;
 
     let mut frame_sender = vec![];
     let mut frame_receiver = vec![];
