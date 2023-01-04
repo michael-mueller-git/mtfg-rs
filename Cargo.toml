@@ -1,0 +1,23 @@
+[package]
+name = "mtfg-rs"
+version = "0.0.1"
+edition = "2021"
+
+[dependencies]
+bytes = "1.3"
+clap = { version = "4", features = ["derive"] }
+fraction = "0.13"
+futures = "0.3"
+futures-util = "0.3"
+image = "0.24"
+indoc = "1.0"
+log = "0.4"
+log4rs = "1.2"
+mint = "0.5"
+opencv = "0.74"
+ramer_douglas_peucker = "0.2"
+regex = "1.7"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1", features = ["full"] }
+tokio-util = { version = "0.7", features = ["full"] }

@@ -1,0 +1,24 @@
+appenders:
+  stdout:
+    kind: console
+    encoder:
+      pattern: "{h({d(%Y-%m-%d %H:%M:%S)(utc)} - {l} - {f}:{L} - {m}{n})}"
+  file_logger:
+    kind: rolling_file
+    path: "logs/mtfg-rs.log"
+    encoder:
+      pattern: "{d(%Y-%m-%d %H:%M:%S)(utc)} - {l} - {f}:{L} - {m}{n}"
+    policy:
+      trigger:
+        kind: size
+        limit: 1Mb
+      roller:
+        kind: fixed_window
+        base: 1
+        count: 3
+        pattern: "logs/mtfg-rs_{}.log"
+root:
+  level: info
+  appenders:
+    - stdout
+    - file_logger
