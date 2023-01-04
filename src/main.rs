@@ -128,8 +128,8 @@ async fn main() {
 
     let raw_score = trajectories::TrackingTrajectories::scale_y(
         tracking_result.get_y_diff(),
-        Some(0),
         Some(100),
+        Some(0),
     );
 
     let keep = ramer_douglas_peucker::rdp(&raw_score, epsilon);
