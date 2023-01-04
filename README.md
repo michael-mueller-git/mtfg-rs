@@ -10,3 +10,8 @@ mtfg-rs is a rust rewrite of the Motion Tracking Funscript Generator (MTFG) Add-
 ## What is the current goal of this project?
 
 - Implement only the most necessary functions needed to create a funscript with a opencv video tracker.
+
+## TODO
+
+- Add Interpolation for `skip_frames` > 0.
+- Implement OFS Lua Extension wrapper.
