@@ -160,6 +160,19 @@ pub async fn spawn_ffmpeg_frame_reader(
         video_dimensions = Some(Dimensions::new(w, h));
     }
 
+    if video_dimensions.is_none() {
+        let re = regex::Regex::new(r"scale=(\d+):(\d+)").unwrap();
+        for cap in re.captures_iter(args.video_filter.as_str()) {
+            let w = cap[1]
+                .parse::<u32>()
+                .expect("failed to parse video filter width");
+            let h = cap[2]
+                .parse::<u32>()
+                .expect("failed to parse video filter height");
+            video_dimensions = Some(Dimensions::new(w, h));
+        }
+    }
+
     let Some(video_dimensions) = video_dimensions else {
         error!("Failed to parse video filter dimensions");
         return;
