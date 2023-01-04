@@ -14,4 +14,3 @@ mtfg-rs is a rust rewrite of the Motion Tracking Funscript Generator (MTFG) Add-
 ## TODO
 
 - Add Interpolation for `skip_frames` > 0.
-- Implement OFS Lua Extension wrapper.
