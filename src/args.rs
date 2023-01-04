@@ -28,6 +28,10 @@ pub struct Args {
     #[clap(short = 'k', long = "skip", default_value = "1")]
     pub skip_frames: u32,
 
+    /// Preview only given frames
+    #[clap(long = "preview", default_value = "1")]
+    pub preview_frames: u32,
+
     /// Video Filter with output 'w=\d:h=\d' parameter
     #[clap(short = 'f', long = "filter")]
     pub video_filter: String,

@@ -46,6 +46,7 @@ async fn main() {
     let skip_frames = args.skip_frames;
     let number_of_tracking_boxes = args.persons as usize;
     let epsilon = args.epsilon;
+    let preview_frames = args.preview_frames;
     let video_start_time_in_ms = args.start_time;
     let output = args.output.clone();
 
@@ -87,6 +88,7 @@ async fn main() {
     let mut tracking_trajectories = vec![];
     while let Some(mut frame) = frame_rx.recv().await {
         frame_counter += 1;
+
         let mut result = vec![];
         for item in tracking_receiver.iter_mut() {
             let Some(tracking_box) = item.recv().await else {
@@ -96,16 +98,20 @@ async fn main() {
             result.push(tracking_box);
         }
 
-        let fps =
-            ((skip_frames + 1) * frame_counter * 1000) as u128 / start_time.elapsed().as_millis();
+        let mut stop = false;
 
-        let stop = opencv_tracker::preview_tracking_boxes(
-            window_name,
-            &mut frame,
-            &result,
-            format!("{fps} fps").as_str(),
-        )
-        .await;
+        if ((frame_counter - 1) % (preview_frames + 1)) == 0 {
+            let fps =
+                ((skip_frames + 1) * frame_counter * 1000) as u128 / start_time.elapsed().as_millis();
+
+            stop = opencv_tracker::preview_tracking_boxes(
+                window_name,
+                &mut frame,
+                &result,
+                format!("{fps} fps").as_str(),
+            )
+            .await;
+        }
 
         tracking_trajectories.push(result);
 
