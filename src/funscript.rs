@@ -26,8 +26,8 @@ pub struct Funscript {
 impl Funscript {
     pub fn new(video_fps: f32, start_time_in_ms: f32, score: Vec<&mint::Point2<i32>>) -> Self {
         Self {
-            video_fps: video_fps,
-            start_time_in_ms: start_time_in_ms,
+            video_fps,
+            start_time_in_ms,
             content: Funscript::to_funscript_content(score, video_fps, start_time_in_ms),
         }
     }
@@ -54,10 +54,9 @@ impl Funscript {
         }
     }
 
-    pub fn save(self: &mut Self, file_path: &str) {
+    pub fn save(&mut self, file_path: &str) {
         let serialized_funscript = serde_json::to_string(&self.content).unwrap();
         info!("save funscript to {file_path}");
-        std::fs::write(file_path, serialized_funscript)
-            .expect(format!("Unable to write funscript: {file_path}").as_str());
+        std::fs::write(file_path, serialized_funscript).unwrap_or_else(|_| panic!("Unable to write funscript: {file_path}"));
     }
 }

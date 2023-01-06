@@ -1,5 +1,4 @@
 use bytes::BytesMut;
-use fraction;
 use fraction::ToPrimitive;
 use futures_util::StreamExt;
 use image::DynamicImage;
@@ -89,7 +88,7 @@ impl FFmpegFrame {
 
 pub fn get_video_fps(video_path: &str) -> Result<f32, Box<dyn std::error::Error>> {
     let mut cmd = std::process::Command::new("ffprobe")
-        .args(&[
+        .args([
             "-v",
             "error",
             "-select_streams",
@@ -179,7 +178,7 @@ pub async fn spawn_ffmpeg_frame_reader(
     };
 
     let mut cmd = Command::new("ffmpeg");
-    cmd.args(&[
+    cmd.args([
         "-hide_banner",
         "-loglevel",
         "warning",

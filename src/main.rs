@@ -101,8 +101,8 @@ async fn main() {
         let mut stop = false;
 
         if ((frame_counter - 1) % (preview_frames + 1)) == 0 {
-            let fps =
-                ((skip_frames + 1) * frame_counter * 1000) as u128 / start_time.elapsed().as_millis();
+            let fps = ((skip_frames + 1) * frame_counter * 1000) as u128
+                / start_time.elapsed().as_millis();
 
             stop = opencv_tracker::preview_tracking_boxes(
                 window_name,

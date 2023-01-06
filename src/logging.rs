@@ -1,5 +1,4 @@
 use indoc::indoc;
-use log4rs;
 
 pub fn setup_logging() {
     let mut log_file_path = std::env::current_exe().unwrap();
@@ -34,8 +33,7 @@ root:
 
     let log_file_path_str = log_file_path.as_os_str();
     if !std::path::Path::new(log_file_path_str).exists() {
-        std::fs::write(log_file_path_str, default_config)
-            .expect("Unable to write default logfile");
+        std::fs::write(log_file_path_str, default_config).expect("Unable to write default logfile");
     }
 
     log4rs::init_file(log_file_path, Default::default()).unwrap();

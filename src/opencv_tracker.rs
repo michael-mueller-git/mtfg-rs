@@ -27,7 +27,7 @@ pub async fn get_rois(
     .unwrap();
 
     while input.len() < boxes {
-        match opencv::highgui::select_roi_for_window(window_name, &mut opencv_frame, true, false) {
+        match opencv::highgui::select_roi_for_window(window_name, &opencv_frame, true, false) {
             Ok(result) => {
                 if result.x != 0 && result.y != 0 {
                     opencv::imgproc::rectangle(
@@ -69,18 +69,18 @@ pub async fn track_feature(
         return;
     };
 
-    let mut opencv_frame = init_frame.get_opencv_frame();
-    if tracker.obj.init(&mut opencv_frame, init_box).is_err() {
+    let opencv_frame = init_frame.get_opencv_frame();
+    if tracker.obj.init(&opencv_frame, init_box).is_err() {
         error!("tracker setup failed");
         return;
     }
 
     let mut bounding_box = init_box;
     while let Some(mut frame) = consumer.recv().await {
-        let mut opencv_frame = frame.get_opencv_frame();
+        let opencv_frame = frame.get_opencv_frame();
         if tracker
             .obj
-            .update(&mut opencv_frame, &mut bounding_box)
+            .update(&opencv_frame, &mut bounding_box)
             .is_err()
         {
             error!("tracking lost");
@@ -115,7 +115,7 @@ pub async fn preview_tracking_boxes(
 
     if !text.is_empty() {
         opencv::highgui::add_text_with_font(
-            &mut opencv_frame,
+            &opencv_frame,
             text,
             opencv::core::Point::new(5, 30),
             "Hack",
@@ -128,7 +128,7 @@ pub async fn preview_tracking_boxes(
         .unwrap();
     }
 
-    opencv::highgui::imshow(window_name, &mut opencv_frame).unwrap();
+    opencv::highgui::imshow(window_name, &opencv_frame).unwrap();
 
     let key = opencv::highgui::wait_key(1).unwrap();
     if key == 'q' as i32 {
