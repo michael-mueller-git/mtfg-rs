@@ -3,23 +3,49 @@ name: Rust Code Check
 on:
   pull_request:
     branches: [ main ]
-  push:
+  workflow_dispatch:
     branches: [ main ]
+  # push:
+  #   branches: [ main ]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  clippy:
+  check:
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: Dovyski/setup-opencv-action@v1.1
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Cache OpenCV
+      id: opencv-cache
+      uses: actions/cache@v2
       with:
-        opencv-version: 4.6.0
-    - name: Install Clippy
+        path: ${{ github.workspace }}/opencv-install
+        key: ${{ runner.os }}-opencv-cache
+
+    - name: Install OpenCV
+      uses: rayandrews/with-opencv-action@v1
+      with:
+        dir: ${{ github.workspace }}/opencv-install
+        cached: ${{ steps.opencv-cache.outputs.cache-hit }}
+        opencv-version: '4.6.0'
+        WITH_QT: ON
+    # - name: Install OpenCV
+    #   uses: Dovyski/setup-opencv-action@v1.1
+    #   with:
+    #     opencv-version: 4.6.0
+    #     WITH_QT: ON
+    - name: Install Clippy and Rustfmt
       run: rustup component add clippy rustfmt
     - name: Clippy
       run: cargo clippy -- -D warnings
     - name: Rustfmt
       run: cargo fmt --all -- --check
+    - name: Build
+      run: cargo build --release
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: mtfg-rs_x86_64
+        path: ./target/release/mtfg-rs
