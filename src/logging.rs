@@ -2,7 +2,9 @@ use indoc::indoc;
 use log4rs;
 
 pub fn setup_logging() {
-    let log_file_path = "log4rs.yaml";
+    let mut log_file_path = std::env::current_exe().unwrap();
+    log_file_path.pop();
+    log_file_path.push("log4rs.yaml");
     let default_config = indoc! {r#"
 appenders:
   stdout:
@@ -30,9 +32,10 @@ root:
     - file_logger
 "#};
 
-    if !std::path::Path::new(log_file_path).exists() {
-        std::fs::write(log_file_path, default_config)
-            .expect(format!("Unable to write default logfile: {log_file_path}").as_str());
+    let log_file_path_str = log_file_path.as_os_str();
+    if !std::path::Path::new(log_file_path_str).exists() {
+        std::fs::write(log_file_path_str, default_config)
+            .expect("Unable to write default logfile");
     }
 
     log4rs::init_file(log_file_path, Default::default()).unwrap();
