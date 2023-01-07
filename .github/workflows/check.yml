@@ -15,8 +15,10 @@ jobs:
   check:
     runs-on: ubuntu-20.04
     steps:
+
     - name: Checkout
       uses: actions/checkout@v2
+
     - name: Cache OpenCV
       id: opencv-cache
       uses: actions/cache@v2
@@ -31,19 +33,19 @@ jobs:
         cached: ${{ steps.opencv-cache.outputs.cache-hit }}
         opencv-version: '4.6.0'
         WITH_QT: ON
-    # - name: Install OpenCV
-    #   uses: Dovyski/setup-opencv-action@v1.1
-    #   with:
-    #     opencv-version: 4.6.0
-    #     WITH_QT: ON
+
     - name: Install Clippy and Rustfmt
       run: rustup component add clippy rustfmt
+
     - name: Clippy
       run: cargo clippy -- -D warnings
+
     - name: Rustfmt
       run: cargo fmt --all -- --check
+
     - name: Build
       run: cargo build --release
+
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v2
       with:

@@ -57,6 +57,7 @@ impl Funscript {
     pub fn save(&mut self, file_path: &str) {
         let serialized_funscript = serde_json::to_string(&self.content).unwrap();
         info!("save funscript to {file_path}");
-        std::fs::write(file_path, serialized_funscript).unwrap_or_else(|_| panic!("Unable to write funscript: {file_path}"));
+        std::fs::write(file_path, serialized_funscript)
+            .unwrap_or_else(|_| panic!("Unable to write funscript: {file_path}"));
     }
 }
