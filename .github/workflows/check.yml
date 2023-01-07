@@ -35,8 +35,14 @@ jobs:
         opencv-version: '4.6.0'
         WITH_QT: ON
 
+    - name: Setup rust toolchain
+      run: rustup toolchain install stable --profile minimal
+
     - name: Install Clippy and Rustfmt
       run: rustup component add clippy rustfmt
+
+    - name: Cache Rust Dependencies
+      uses: Swatinem/rust-cache@v2
 
     - name: Run Clippy
       run: cargo clippy -- -D warnings
