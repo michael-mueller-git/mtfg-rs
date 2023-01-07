@@ -122,10 +122,10 @@ pub fn get_video_fps(video_path: &str) -> Result<f32, Box<dyn std::error::Error>
 }
 
 pub fn millisec_to_timestamp(val: u32) -> String {
-    let seconds = ((val / 1000) % 60) as u32;
-    let minutes = ((val / (1000 * 60)) % 60) as u32;
-    let hours = ((val / (1000 * 60 * 60)) % 24) as u32;
-    let millis = (val % 1000) as u32;
+    let seconds = (val / 1000) % 60;
+    let minutes = (val / (1000 * 60)) % 60;
+    let hours = (val / (1000 * 60 * 60)) % 24;
+    let millis = val % 1000;
     format!("{hours:0>2}:{minutes:0>2}:{seconds:0>2}.{millis:0>3}")
 }
 
