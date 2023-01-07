@@ -19,6 +19,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
+    # NOTE: The cache will only be saved if the whole job succeeds!
     - name: Cache OpenCV
       id: opencv-cache
       uses: actions/cache@v3
@@ -37,13 +38,13 @@ jobs:
     - name: Install Clippy and Rustfmt
       run: rustup component add clippy rustfmt
 
-    - name: Clippy
+    - name: Run Clippy
       run: cargo clippy -- -D warnings
 
-    - name: Rustfmt
+    - name: Run Rustfmt
       run: cargo fmt --all -- --check
 
-    - name: Build
+    - name: Build Artifact
       run: cargo build --release
 
     - name: Upload Build Artifact
