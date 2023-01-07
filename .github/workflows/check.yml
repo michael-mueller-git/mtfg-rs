@@ -17,19 +17,19 @@ jobs:
     steps:
 
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Cache OpenCV
       id: opencv-cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
-        path: ${{ github.workspace }}/opencv-install
+        path: ./opencv-install
         key: ${{ runner.os }}-opencv-cache
 
     - name: Install OpenCV
       uses: rayandrews/with-opencv-action@v1
       with:
-        dir: ${{ github.workspace }}/opencv-install
+        dir: ./opencv-install
         cached: ${{ steps.opencv-cache.outputs.cache-hit }}
         opencv-version: '4.6.0'
         WITH_QT: ON
