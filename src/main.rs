@@ -10,7 +10,7 @@ use log::info;
 
 #[tokio::main(worker_threads = 6)]
 async fn main() {
-    let args = args::parse_args();
+    let mut args = args::parse_args();
     logging::setup_logging();
 
     if args.persons > 2 {
@@ -26,14 +26,36 @@ async fn main() {
         .await
         .unwrap()
         .unwrap();
-    let projection = ffmpeg_stream::transform_frame(
-        (*start_frame.image).clone(),
-        "v360=input=he:in_stereo=sbs:pitch=-25:yaw=0:roll=0:output=flat:d_fov=90:w=800:h=800",
-    )
-    .await
-    .unwrap()
-    .unwrap();
-    projection.image.save("./test.png").unwrap();
+
+    let mut pitch: i8 = -25;
+    let mut yaw: i8 = 0;
+    let mut video_filter: String;
+    loop {
+        video_filter = args.video_filter.replace("{pitch}", format!("{pitch}").as_str()).replace("{yaw}", format!("{yaw}").as_str());
+        let mut projection = ffmpeg_stream::transform_frame(
+            (*start_frame.image).clone(),
+            &video_filter.as_str(),
+        )
+        .await
+        .unwrap()
+        .unwrap();
+        projection
+            .get_opencv_frame()
+            .with_mut(|frame| opencv::highgui::imshow(window_name, frame.mat).unwrap());
+        let key = opencv::highgui::wait_key(1).unwrap();
+        if key > 0 {
+            match char::from_u32(key.try_into().unwrap()) {
+                Some('q') => break,
+                Some('w') => pitch += 5,
+                Some('s') => pitch -= 5,
+                Some('a') => yaw -= 5,
+                Some('d') => yaw += 5,
+                _ => {}
+            };
+        }
+    }
+
+    args.video_filter = video_filter;
 
     let mut frame_sender = vec![];
     let mut frame_receiver = vec![];

@@ -33,7 +33,7 @@ pub struct Args {
     pub preview_frames: u32,
 
     /// Video Filter with output 'w=\d:h=\d' parameter
-    #[clap(short = 'f', long = "filter")]
+    #[clap(short = 'f', long = "filter", default_value = "v360=input=he:in_stereo=sbs:pitch={pitch}:yaw={yaw}:roll=0:output=flat:d_fov=90:w=800:h=800")]
     pub video_filter: String,
 
     /// Number of moving persons
