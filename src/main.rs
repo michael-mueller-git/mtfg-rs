@@ -24,35 +24,35 @@ async fn main() {
     let window_name = "mtfg-rs";
     let channel_capacity = 64;
 
-    let test = args.input.clone();
-    let opencv_frame = ffmpeg_stream::get_single_frame2(
-        &test,
-        0,
-        ffmpeg_stream::Dimensions {
-            width: 1280,
-            height: 720,
-        },
-    )
-    .await;
+    // let test = args.input.clone();
+    // let opencv_frame = ffmpeg_stream::get_single_frame2(
+    //     &test,
+    //     0,
+    //     ffmpeg_stream::Dimensions {
+    //         width: 1280,
+    //         height: 720,
+    //     },
+    // )
+    // .await;
 
     // let opencv_frame2 = opencv_frame.unwrap();
     // let mut opencv_frame3 = opencv_frame2.unwrap();
     // let opencv_frame4 = *opencv_frame3.get_opencv_frame();
 
-    let mut opencv_frame3 = opencv_frame.unwrap().unwrap();
-    let mut opencv_frame4 = opencv_frame3.get_opencv_frame();
+    // let mut opencv_frame3 = opencv_frame.unwrap().unwrap();
+    // let mut opencv_frame4 = opencv_frame3.get_opencv_frame();
 
     // let mut opencv_frame4 = opencv_frame.unwrap().unwrap().get_opencv_frame();
 
-    std::thread::sleep(std::time::Duration::from_millis(1000));
-    opencv_frame4.with_mut(|frame| 
-    opencv::imgcodecs::imwrite(
-        "./test.png",
-        frame.mat,
-        &opencv::core::Vector::default(),
-    )
-    .unwrap());
-    std::thread::sleep(std::time::Duration::from_millis(1000));
+//     std::thread::sleep(std::time::Duration::from_millis(1000));
+//     opencv_frame4.with_mut(|frame| 
+//     opencv::imgcodecs::imwrite(
+//         "./test.png",
+//         frame.mat,
+//         &opencv::core::Vector::default(),
+//     )
+//     .unwrap());
+//     std::thread::sleep(std::time::Duration::from_millis(1000));
     // opencv_frame3.image.save("test_image.png").unwrap();
 
     let mut frame_sender = vec![];

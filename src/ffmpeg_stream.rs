@@ -138,37 +138,8 @@ pub fn get_video_fps(video_path: &str) -> Result<f32, Box<dyn std::error::Error>
     }
 }
 
-// pub fn get_single_frame(video_path: &str, timestamp_in_ms: u32) -> Result<FFmpegFrame, Box<dyn std::error::Error>> {
-//     let cmd = std::process::Command::new("ffmpeg")
-//         .args([
-//             "-hide_banner",
-//             "-loglevel", "warning",
-//             "-ss", millisec_to_timestamp(timestamp_in_ms).as_str(),
-//             "-hwaccel", "auto",
-//             "-i", video_path,
-//             "-vframes", "1",
-//             "-f", "image2pipe",
-//             "-pix_fmt", "bgr24",
-//             "-fps_mode", "passthrough",
-//             "-vcodec", "rawvideo",
-//             "-an",
-//             "-sn",
-//             "-"
-//         ])
-//         .output()?;
 
-//     let frame = cmd.stdout;
-
-//     let frame_buffer: FrameBuffer = FrameBuffer::from_raw(
-//         4096,
-//         2048,
-//         frame,
-//     ).unwrap();
-
-//     Ok(FFmpegFrame::new(frame_buffer))
-// }
-
-pub async fn get_single_frame2(
+pub async fn get_single_frame(
     video_path: &str,
     timestamp_in_ms: u32,
     frame_dimensions: Dimensions,

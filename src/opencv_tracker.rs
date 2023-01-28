@@ -7,10 +7,6 @@ pub struct OpencvTracker {
     obj: opencv::core::Ptr<dyn opencv::tracking::TrackerCSRT>,
 }
 
-// The following hack is required for non blocking tokio tasks:
-// unsafe impl Send for OpencvTracker {}
-// unsafe impl Sync for OpencvTracker {}
-
 pub async fn get_rois(
     boxes: usize,
     window_name: &str,
@@ -27,20 +23,19 @@ pub async fn get_rois(
     .unwrap();
 
     while input.len() < boxes {
-        opencv_frame.with_mut(|frame1| {
-        match opencv::highgui::select_roi_for_window(window_name, frame1.mat, true, false) {
+        opencv_frame.with_mut(|frame| {
+        match opencv::highgui::select_roi_for_window(window_name, frame.mat, true, false) {
             Ok(result) => {
                 if result.x != 0 && result.y != 0 {
-                    // opencv_frame.with_mut(|frame| 
-                    // opencv::imgproc::rectangle(
-                    //     &mut frame.mat,
-                    //     result,
-                    //     opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
-                    //     2,
-                    //     8,
-                    //     0,
-                    // )
-                    // .unwrap());
+                    opencv::imgproc::rectangle(
+                        &mut frame.mat,
+                        result,
+                        opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
+                        2,
+                        8,
+                        0,
+                    )
+                    .unwrap();
                     input.push(result);
                 } else {
                     error!("Invalid Input");
@@ -72,13 +67,18 @@ pub async fn track_feature(
         return;
     };
 
+    let mut exit = false;
     let mut opencv_frame = init_frame.get_opencv_frame();
     opencv_frame.with_mut(|frame| {
     if tracker.obj.init(frame.mat, init_box).is_err() {
         error!("tracker setup failed");
-        // return;
+        exit = true;
     }
     });
+
+    if exit {
+        return;
+    }
 
     let mut bounding_box = init_box;
     while let Some(mut frame) = consumer.recv().await {
@@ -90,8 +90,12 @@ pub async fn track_feature(
             .is_err()
         {
             error!("tracking lost");
-            // break;
+            exit = true;
         }});
+
+        if exit {
+            break;
+        }
 
         if producer.send(bounding_box).await.is_err() {
             error!("tracker: error adding box to process queue");
