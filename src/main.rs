@@ -47,6 +47,7 @@ async fn main() {
         if key > 0 {
             match char::from_u32(key.try_into().unwrap()) {
                 Some('q') => break,
+                Some(' ') => break,
                 Some('w') => pitch += 5,
                 Some('s') => pitch -= 5,
                 Some('a') => yaw -= 5,
