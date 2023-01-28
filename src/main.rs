@@ -57,7 +57,7 @@ async fn main() {
 
     tokio::task::spawn_blocking(move || {
         tokio::runtime::Handle::current()
-            .block_on(ffmpeg_stream::spawn_ffmpeg_frame_reader(args, frame_sender));
+            .block_on(ffmpeg_stream::ffmpeg_stream_reader(args, frame_sender));
     });
 
     let Some(mut frame) = frame_rx.recv().await else {

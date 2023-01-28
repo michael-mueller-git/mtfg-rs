@@ -1,4 +1,5 @@
 use bytes::BytesMut;
+use fortify::*;
 use fraction::ToPrimitive;
 use futures_util::StreamExt;
 use image::DynamicImage;
@@ -16,7 +17,6 @@ use std::sync::Arc;
 use tokio::process::Command;
 use tokio_util::codec::Decoder;
 use tokio_util::codec::FramedRead;
-use fortify::*;
 
 use crate::args;
 
@@ -65,7 +65,7 @@ impl Decoder for VideoFrame {
 
 #[derive(Lower)]
 pub struct OpencvMatWithLifetime<'a> {
-   pub mat: &'a mut opencv::core::Mat,
+    pub mat: &'a mut opencv::core::Mat,
 }
 
 #[derive(Clone)]
@@ -138,12 +138,10 @@ pub fn get_video_fps(video_path: &str) -> Result<f32, Box<dyn std::error::Error>
     }
 }
 
-
-pub async fn ffmpeg_frame_reader(
+pub async fn spawn_ffmpeg_frame_reader(
     args: Vec<&str>,
     frame_dimensions: Dimensions,
-    mut frame_handler: impl FnMut(FrameBuffer),
-) {
+) -> FramedRead<tokio::process::ChildStdout, VideoFrame> {
     let mut cmd = Command::new("ffmpeg");
     cmd.args(args);
 
@@ -164,32 +162,22 @@ pub async fn ffmpeg_frame_reader(
             .expect("ffmpeg process encountered an error");
     });
 
-    let mut reader = FramedRead::new(
+    FramedRead::new(
         stdout,
         VideoFrame::new(frame_dimensions.width, frame_dimensions.height),
-    );
-
-    info!("start ffmpeg");
-
-    while let Some(Ok(bytes_mut_buffer)) = reader.next().await {
-        let frame_buffer: FrameBuffer = FrameBuffer::from_raw(
-            frame_dimensions.width,
-            frame_dimensions.height,
-            bytes_mut_buffer.to_vec(),
-        )
-        .expect("ffmpeg: parse frame error");
-        frame_handler(frame_buffer);
-    }
-
-    info!("stop ffmpeg");
+    )
 }
 
 pub async fn get_single_frame(
     video_path: &str,
     timestamp_in_ms: u32,
 ) -> Result<Option<FFmpegFrame>, Box<dyn std::error::Error>> {
-    let mut result = Ok(None);
-    ffmpeg_frame_reader(
+    let d = Dimensions {
+        width: 4096,
+        height: 2048,
+    };
+
+    let mut reader = spawn_ffmpeg_frame_reader(
         vec![
             "-hide_banner",
             "-loglevel",
@@ -214,17 +202,20 @@ pub async fn get_single_frame(
             "-sn",
             "-",
         ],
-        Dimensions {
-            width: 4096,
-            height: 2048,
-        },
-        |frame_buffer| {
-            result = Ok(Some(FFmpegFrame::new(frame_buffer)));
-        },
+        d,
     )
     .await;
-    result
+
+    if let Some(Ok(bytes_mut_buffer)) = reader.next().await {
+        let frame_buffer: FrameBuffer =
+            FrameBuffer::from_raw(d.width, d.height, bytes_mut_buffer.to_vec())
+                .expect("ffmpeg: parse frame error");
+        Ok(Some(FFmpegFrame::new(frame_buffer)))
+    } else {
+        Ok(None)
+    }
 }
+
 pub fn millisec_to_timestamp(val: u32) -> String {
     let seconds = (val / 1000) % 60;
     let minutes = (val / (1000 * 60)) % 60;
@@ -234,7 +225,7 @@ pub fn millisec_to_timestamp(val: u32) -> String {
 }
 
 fn get_dimension_from_video_filter(video_filter: &str) -> Option<Dimensions> {
-let mut video_dimensions: Option<Dimensions> = None;
+    let mut video_dimensions: Option<Dimensions> = None;
     let re = regex::Regex::new(r"w=(\d+):h=(\d+)").unwrap();
     for cap in re.captures_iter(video_filter) {
         let w = cap[1]
@@ -261,7 +252,7 @@ let mut video_dimensions: Option<Dimensions> = None;
     video_dimensions
 }
 
-pub async fn spawn_ffmpeg_frame_reader(
+pub async fn ffmpeg_stream_reader(
     args: args::Args,
     producers: Vec<tokio::sync::mpsc::Sender<FFmpegFrame<'_>>>,
 ) {
@@ -284,51 +275,32 @@ pub async fn spawn_ffmpeg_frame_reader(
         return;
     };
 
-    let mut cmd = Command::new("ffmpeg");
-    cmd.args([
-        "-hide_banner",
-        "-loglevel",
-        "warning",
-        "-hwaccel",
-        "auto",
-        "-ss",
-        millisec_to_timestamp(args.start_time as u32).as_str(),
-        "-i",
-        args.input.as_str(),
-        "-f",
-        "image2pipe",
-        "-pix_fmt",
-        "bgr24",
-        "-vcodec",
-        "rawvideo",
-        "-an",
-        "-sn",
-        "-vf",
-        args.video_filter.as_str(),
-        "-",
-    ]);
-
-    cmd.stdout(Stdio::piped());
-    cmd.stderr(Stdio::null());
-
-    let mut child = cmd.spawn().expect("failed to spawn ffmpeg");
-
-    let stdout = child
-        .stdout
-        .take()
-        .expect("ffmpeg process did not have a handle to stdout");
-
-    tokio::spawn(async move {
-        let _ = child
-            .wait()
-            .await
-            .expect("ffmpeg process encountered an error");
-    });
-
-    let mut reader = FramedRead::new(
-        stdout,
-        VideoFrame::new(video_dimensions.width, video_dimensions.height),
-    );
+    let mut reader = spawn_ffmpeg_frame_reader(
+        vec![
+            "-hide_banner",
+            "-loglevel",
+            "warning",
+            "-hwaccel",
+            "auto",
+            "-ss",
+            millisec_to_timestamp(args.start_time as u32).as_str(),
+            "-i",
+            args.input.as_str(),
+            "-f",
+            "image2pipe",
+            "-pix_fmt",
+            "bgr24",
+            "-vcodec",
+            "rawvideo",
+            "-an",
+            "-sn",
+            "-vf",
+            args.video_filter.as_str(),
+            "-",
+        ],
+        video_dimensions,
+    )
+    .await;
 
     info!("start ffmpeg");
 
