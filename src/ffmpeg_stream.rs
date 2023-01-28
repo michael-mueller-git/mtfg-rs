@@ -7,15 +7,15 @@ use image::Rgb;
 use log::error;
 use log::info;
 use log::warn;
+use std::boxed::Box;
 use std::io;
 use std::io::{BufRead, BufReader};
+use std::marker::PhantomData;
 use std::process::Stdio;
+use std::sync::Arc;
 use tokio::process::Command;
 use tokio_util::codec::Decoder;
 use tokio_util::codec::FramedRead;
-use std::sync::Arc;
-use std::boxed::Box;
-use std::marker::PhantomData;
 // use fortify::*;
 
 use crate::args;
@@ -77,20 +77,22 @@ impl<'a> FFmpegFrame<'a> {
         Self {
             // NOTE: We store bgr image in rgb buffer!
             image: Arc::new(DynamicImage::ImageRgb8(frame_buffer)),
-            image_lifetime: PhantomData
+            image_lifetime: PhantomData,
         }
     }
 
-    pub fn get_opencv_frame(&'a mut self) -> Box<dyn MatTrait + 'a> {
+    pub fn get_opencv_frame(&mut self) -> Box<dyn MatTrait + 'a> {
         unsafe {
-                Box::new(opencv::prelude::Mat::new_rows_cols_with_data(
+            Box::new(
+                opencv::prelude::Mat::new_rows_cols_with_data(
                     self.image.height() as i32,
                     self.image.width() as i32,
                     opencv::core::CV_8UC3,
                     self.image.as_rgb8().unwrap().as_ptr() as *mut _,
                     opencv::core::Mat_AUTO_STEP,
                 )
-                .unwrap())
+                .unwrap(),
+            )
         }
     }
 }
@@ -160,22 +162,35 @@ pub fn get_video_fps(video_path: &str) -> Result<f32, Box<dyn std::error::Error>
 //     Ok(FFmpegFrame::new(frame_buffer))
 // }
 
-pub async fn get_single_frame2(video_path: &str, timestamp_in_ms: u32, frame_dimensions: Dimensions) -> Result<Option<FFmpegFrame>, Box<dyn std::error::Error>> {
+pub async fn get_single_frame2(
+    video_path: &str,
+    timestamp_in_ms: u32,
+    frame_dimensions: Dimensions,
+) -> Result<Option<FFmpegFrame>, Box<dyn std::error::Error>> {
     let mut cmd = Command::new("ffmpeg");
     cmd.args([
-            "-hide_banner",
-            "-loglevel", "warning",
-            "-ss", millisec_to_timestamp(timestamp_in_ms).as_str(),
-            "-hwaccel", "auto",
-            "-i", video_path,
-            "-vframes", "1",
-            "-f", "image2pipe",
-            "-pix_fmt", "bgr24",
-            "-fps_mode", "passthrough",
-            "-vcodec", "rawvideo",
-            "-an",
-            "-sn",
-            "-"
+        "-hide_banner",
+        "-loglevel",
+        "warning",
+        "-ss",
+        millisec_to_timestamp(timestamp_in_ms).as_str(),
+        "-hwaccel",
+        "auto",
+        "-i",
+        video_path,
+        "-vframes",
+        "1",
+        "-f",
+        "image2pipe",
+        "-pix_fmt",
+        "bgr24",
+        "-fps_mode",
+        "passthrough",
+        "-vcodec",
+        "rawvideo",
+        "-an",
+        "-sn",
+        "-",
     ]);
 
     cmd.stdout(Stdio::piped());
@@ -204,16 +219,16 @@ pub async fn get_single_frame2(video_path: &str, timestamp_in_ms: u32, frame_dim
         Some(Ok(bytes_mut_buffer)) => {
             println!("extract frame");
             let frame_buffer: FrameBuffer = FrameBuffer::from_raw(
-            frame_dimensions.width,
-            frame_dimensions.height,
-            bytes_mut_buffer.to_vec(),
-        )        .expect("ffmpeg: parse frame error");
-                Ok(Some(FFmpegFrame::new(frame_buffer)))
-        },
-        _ => Ok(None)
+                frame_dimensions.width,
+                frame_dimensions.height,
+                bytes_mut_buffer.to_vec(),
+            )
+            .expect("ffmpeg: parse frame error");
+            Ok(Some(FFmpegFrame::new(frame_buffer)))
+        }
+        _ => Ok(None),
     }
 }
-
 
 pub fn millisec_to_timestamp(val: u32) -> String {
     let seconds = (val / 1000) % 60;

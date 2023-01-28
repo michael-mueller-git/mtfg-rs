@@ -2,6 +2,12 @@
 
 mtfg-rs is a rust rewrite of the Motion Tracking Funscript Generator (MTFG) Add-On from [Python-Funscript-Editor](https://github.com/michael-mueller-git/Python-Funscript-Editor). mtfg-rs is a motion tracking program to partially automate the generation of funscripts.
 
+## Compile
+
+```bash
+cargo +nightly build --release
+```
+
 ## Why does this project exists?
 
 - A simple project to learn the basics of the blazing fast programming language rust and [asynchronous tokio runtime](https://tokio.rs/).

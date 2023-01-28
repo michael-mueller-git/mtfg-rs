@@ -98,46 +98,43 @@ pub async fn preview_tracking_boxes(
     window_name: &str,
     frame: &mut FFmpegFrame<'_>,
     boxes: &Vec<opencv::core::Rect>,
-    text: &str,
+    _text: &str,
 ) -> bool {
-    if let mut opencv_frame = frame.get_opencv_frame() {
-        for tracking_box in boxes {
-            opencv::imgproc::rectangle(
-                &mut *opencv_frame,
-                *tracking_box,
-                opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
-                2,
-                8,
-                0,
-            )
-            .unwrap();
-        }
+    let mut opencv_frame = frame.get_opencv_frame();
+    for tracking_box in boxes {
+        opencv::imgproc::rectangle(
+            &mut *opencv_frame,
+            *tracking_box,
+            opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
+            2,
+            8,
+            0,
+        )
+        .unwrap();
+    }
 
-        // if !text.is_empty() {
-        //     opencv::highgui::add_text_with_font(
-        //         &opencv_frame,
-        //         text,
-        //         opencv::core::Point::new(5, 30),
-        //         "Hack",
-        //         20,
-        //         opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
-        //         0, /* opencv::highgui::QtFontWeights::QT_FONT_NORMAL */
-        //         0, /* opencv::highgui::QtFontStyles::QT_STYLE_NORMAL */
-        //         0,
-        //     )
-        //     .unwrap();
-        // }
+    // if !text.is_empty() {
+    //     opencv::highgui::add_text_with_font(
+    //         &opencv_frame,
+    //         text,
+    //         opencv::core::Point::new(5, 30),
+    //         "Hack",
+    //         20,
+    //         opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
+    //         0, /* opencv::highgui::QtFontWeights::QT_FONT_NORMAL */
+    //         0, /* opencv::highgui::QtFontStyles::QT_STYLE_NORMAL */
+    //         0,
+    //     )
+    //     .unwrap();
+    // }
 
-        opencv::highgui::imshow(window_name, & *opencv_frame).unwrap();
+    opencv::highgui::imshow(window_name, &*opencv_frame).unwrap();
 
-        let key = opencv::highgui::wait_key(1).unwrap();
-        if key == 'q' as i32 {
-            info!("stop requested by user");
-            return true;
-        } else {
-            return false;
-        }
+    let key = opencv::highgui::wait_key(1).unwrap();
+    if key == 'q' as i32 {
+        info!("stop requested by user");
+        true
     } else {
-        return true;
+        false
     }
 }
