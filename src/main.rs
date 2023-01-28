@@ -29,10 +29,12 @@ async fn main() {
 
     let mut pitch: i8 = -25;
     let mut yaw: i8 = 0;
+    let mut fov: u8 = 90;
     let mut video_filter: String;
     loop {
         video_filter = args
             .video_filter
+            .replace("{fov}", format!("{fov}").as_str())
             .replace("{pitch}", format!("{pitch}").as_str())
             .replace("{yaw}", format!("{yaw}").as_str());
         let mut projection =
@@ -52,6 +54,8 @@ async fn main() {
                 Some('s') => pitch -= 5,
                 Some('a') => yaw -= 5,
                 Some('d') => yaw += 5,
+                Some('+') => fov -= 5,
+                Some('-') => fov += 5,
                 _ => {}
             };
         }

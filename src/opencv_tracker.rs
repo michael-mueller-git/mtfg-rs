@@ -24,17 +24,17 @@ pub async fn get_rois(
 
     opencv_frame.with_mut(|frame| {
         opencv::highgui::add_text_with_font(
-                frame.mat,
-                "Select Tracking Features",
-                opencv::core::Point::new(5, 30),
-                "Hack",
-                20,
-                opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
-                0, /* opencv::highgui::QtFontWeights::QT_FONT_NORMAL */
-                0, /* opencv::highgui::QtFontStyles::QT_STYLE_NORMAL */
-                0,
-            )
-            .unwrap();
+            frame.mat,
+            "Select Tracking Features",
+            opencv::core::Point::new(5, 30),
+            "Hack",
+            20,
+            opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
+            0, /* opencv::highgui::QtFontWeights::QT_FONT_NORMAL */
+            0, /* opencv::highgui::QtFontStyles::QT_STYLE_NORMAL */
+            0,
+        )
+        .unwrap();
         while input.len() < boxes {
             match opencv::highgui::select_roi_for_window(window_name, frame.mat, true, false) {
                 Ok(result) => {
