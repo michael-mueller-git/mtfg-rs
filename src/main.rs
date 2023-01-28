@@ -1,3 +1,6 @@
+#![feature(trait_upcasting)]
+#![allow(incomplete_features)]
+
 mod args;
 mod ffmpeg_stream;
 mod funscript;
@@ -31,10 +34,10 @@ async fn main() {
     // let mut opencv_frame3 = opencv_frame.unwrap().unwrap();
     // let opencv_frame4 = *opencv_frame3.get_opencv_frame();
 
-    let mut opencv_frame4 = *opencv_frame.unwrap().unwrap().get_opencv_frame();
+    let mut opencv_frame4 = opencv_frame.unwrap().unwrap().get_opencv_frame();
 
     std::thread::sleep(std::time::Duration::from_millis(1000));
-    opencv::imgcodecs::imwrite("./test.png", &opencv_frame4, &opencv::core::Vector::default()).unwrap();
+    opencv::imgcodecs::imwrite("./test.png", &*opencv_frame4, &opencv::core::Vector::default()).unwrap();
     std::thread::sleep(std::time::Duration::from_millis(1000));
     // opencv_frame3.image.save("test_image.png").unwrap();
 
