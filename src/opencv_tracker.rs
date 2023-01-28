@@ -14,11 +14,11 @@ pub struct OpencvTracker {
 pub async fn get_rois(
     boxes: usize,
     window_name: &str,
-    frame: &mut FFmpegFrame,
+    frame: &mut FFmpegFrame<'_>,
 ) -> Vec<opencv::core::Rect> {
     let mut input: Vec<opencv::core::Rect> = vec![];
     let mut frame = frame.clone();
-    let mut opencv_frame = frame.get_opencv_frame();
+    let mut opencv_frame = *frame.get_opencv_frame();
 
     opencv::highgui::named_window(
         window_name,
@@ -55,7 +55,7 @@ pub async fn get_rois(
 
 pub async fn track_feature(
     init_box: opencv::core::Rect,
-    mut consumer: tokio::sync::mpsc::Receiver<FFmpegFrame>,
+    mut consumer: tokio::sync::mpsc::Receiver<FFmpegFrame<'_>>,
     producer: tokio::sync::mpsc::Sender<opencv::core::Rect>,
 ) {
     let tracker_param: opencv::tracking::TrackerCSRT_Params =
@@ -69,7 +69,7 @@ pub async fn track_feature(
         return;
     };
 
-    let opencv_frame = init_frame.get_opencv_frame();
+    let opencv_frame = *init_frame.get_opencv_frame();
     if tracker.obj.init(&opencv_frame, init_box).is_err() {
         error!("tracker setup failed");
         return;
@@ -77,7 +77,7 @@ pub async fn track_feature(
 
     let mut bounding_box = init_box;
     while let Some(mut frame) = consumer.recv().await {
-        let opencv_frame = frame.get_opencv_frame();
+        let opencv_frame = *frame.get_opencv_frame();
         if tracker
             .obj
             .update(&opencv_frame, &mut bounding_box)
@@ -96,45 +96,50 @@ pub async fn track_feature(
 
 pub async fn preview_tracking_boxes(
     window_name: &str,
-    frame: &mut FFmpegFrame,
+    frame: &mut FFmpegFrame<'_>,
     boxes: &Vec<opencv::core::Rect>,
     text: &str,
 ) -> bool {
-    let mut opencv_frame = frame.get_opencv_frame();
-    for tracking_box in boxes {
-        opencv::imgproc::rectangle(
-            &mut opencv_frame,
-            *tracking_box,
-            opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
-            2,
-            8,
-            0,
-        )
-        .unwrap();
-    }
+    let b = frame;
+    let c = b.get_opencv_frame();
+    if let mut opencv_frame = *c {
+        for tracking_box in boxes {
+            opencv::imgproc::rectangle(
+                &mut opencv_frame,
+                *tracking_box,
+                opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
+                2,
+                8,
+                0,
+            )
+            .unwrap();
+        }
 
-    if !text.is_empty() {
-        opencv::highgui::add_text_with_font(
-            &opencv_frame,
-            text,
-            opencv::core::Point::new(5, 30),
-            "Hack",
-            20,
-            opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
-            0, /* opencv::highgui::QtFontWeights::QT_FONT_NORMAL */
-            0, /* opencv::highgui::QtFontStyles::QT_STYLE_NORMAL */
-            0,
-        )
-        .unwrap();
-    }
+        if !text.is_empty() {
+            opencv::highgui::add_text_with_font(
+                &opencv_frame,
+                text,
+                opencv::core::Point::new(5, 30),
+                "Hack",
+                20,
+                opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
+                0, /* opencv::highgui::QtFontWeights::QT_FONT_NORMAL */
+                0, /* opencv::highgui::QtFontStyles::QT_STYLE_NORMAL */
+                0,
+            )
+            .unwrap();
+        }
 
-    opencv::highgui::imshow(window_name, &opencv_frame).unwrap();
+        opencv::highgui::imshow(window_name, &opencv_frame).unwrap();
 
-    let key = opencv::highgui::wait_key(1).unwrap();
-    if key == 'q' as i32 {
-        info!("stop requested by user");
-        true
+        let key = opencv::highgui::wait_key(1).unwrap();
+        if key == 'q' as i32 {
+            info!("stop requested by user");
+            return true;
+        } else {
+            return false;
+        }
     } else {
-        false
+        return true;
     }
 }

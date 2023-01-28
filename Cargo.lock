@@ -398,6 +398,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
+name = "fortify"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09fd82d3b82d9c68b1731127375e34de21f2089c9044428a83f19f6359bec45d"
+dependencies = [
+ "fortify_derive",
+]
+
+[[package]]
+name = "fortify_derive"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "29323146124d7cd5e16defd480ef55246a8614a4bc1212921a59274358dfe3b8"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "fraction"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -843,6 +863,7 @@ version = "0.0.1"
 dependencies = [
  "bytes",
  "clap",
+ "fortify",
  "fraction",
  "futures",
  "futures-util",

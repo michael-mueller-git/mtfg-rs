@@ -13,6 +13,10 @@ use std::process::Stdio;
 use tokio::process::Command;
 use tokio_util::codec::Decoder;
 use tokio_util::codec::FramedRead;
+use std::sync::Arc;
+use std::boxed::Box;
+use std::marker::PhantomData;
+// use fortify::*;
 
 use crate::args;
 
@@ -59,29 +63,34 @@ impl Decoder for VideoFrame {
     }
 }
 
+pub trait MatTrait: opencv::core::ToInputOutputArray + opencv::core::ToInputArray {}
+impl MatTrait for opencv::core::Mat {}
+
 #[derive(Clone)]
-pub struct FFmpegFrame {
-    image: DynamicImage,
+pub struct FFmpegFrame<'a> {
+    pub image: Arc<DynamicImage>,
+    image_lifetime: PhantomData<&'a DynamicImage>,
 }
 
-impl FFmpegFrame {
+impl<'a> FFmpegFrame<'a> {
     pub fn new(frame_buffer: FrameBuffer) -> Self {
         Self {
             // NOTE: We store bgr image in rgb buffer!
-            image: DynamicImage::ImageRgb8(frame_buffer),
+            image: Arc::new(DynamicImage::ImageRgb8(frame_buffer)),
+            image_lifetime: PhantomData
         }
     }
 
-    pub fn get_opencv_frame(&mut self) -> opencv::core::Mat {
+    pub fn get_opencv_frame(&'a mut self) -> Box<dyn MatTrait + 'a> {
         unsafe {
-            opencv::prelude::Mat::new_rows_cols_with_data(
-                self.image.height() as i32,
-                self.image.width() as i32,
-                opencv::core::CV_8UC3,
-                self.image.as_mut_rgb8().unwrap().as_mut_ptr() as *mut _,
-                opencv::core::Mat_AUTO_STEP,
-            )
-            .unwrap()
+                Box::new(opencv::prelude::Mat::new_rows_cols_with_data(
+                    self.image.height() as i32,
+                    self.image.width() as i32,
+                    opencv::core::CV_8UC3,
+                    self.image.as_rgb8().unwrap().as_ptr() as *mut _,
+                    opencv::core::Mat_AUTO_STEP,
+                )
+                .unwrap())
         }
     }
 }
@@ -121,6 +130,91 @@ pub fn get_video_fps(video_path: &str) -> Result<f32, Box<dyn std::error::Error>
     }
 }
 
+// pub fn get_single_frame(video_path: &str, timestamp_in_ms: u32) -> Result<FFmpegFrame, Box<dyn std::error::Error>> {
+//     let cmd = std::process::Command::new("ffmpeg")
+//         .args([
+//             "-hide_banner",
+//             "-loglevel", "warning",
+//             "-ss", millisec_to_timestamp(timestamp_in_ms).as_str(),
+//             "-hwaccel", "auto",
+//             "-i", video_path,
+//             "-vframes", "1",
+//             "-f", "image2pipe",
+//             "-pix_fmt", "bgr24",
+//             "-fps_mode", "passthrough",
+//             "-vcodec", "rawvideo",
+//             "-an",
+//             "-sn",
+//             "-"
+//         ])
+//         .output()?;
+
+//     let frame = cmd.stdout;
+
+//     let frame_buffer: FrameBuffer = FrameBuffer::from_raw(
+//         4096,
+//         2048,
+//         frame,
+//     ).unwrap();
+
+//     Ok(FFmpegFrame::new(frame_buffer))
+// }
+
+pub async fn get_single_frame2(video_path: &str, timestamp_in_ms: u32, frame_dimensions: Dimensions) -> Result<Option<FFmpegFrame>, Box<dyn std::error::Error>> {
+    let mut cmd = Command::new("ffmpeg");
+    cmd.args([
+            "-hide_banner",
+            "-loglevel", "warning",
+            "-ss", millisec_to_timestamp(timestamp_in_ms).as_str(),
+            "-hwaccel", "auto",
+            "-i", video_path,
+            "-vframes", "1",
+            "-f", "image2pipe",
+            "-pix_fmt", "bgr24",
+            "-fps_mode", "passthrough",
+            "-vcodec", "rawvideo",
+            "-an",
+            "-sn",
+            "-"
+    ]);
+
+    cmd.stdout(Stdio::piped());
+    cmd.stderr(Stdio::null());
+
+    let mut child = cmd.spawn().expect("failed to spawn ffmpeg");
+
+    let stdout = child
+        .stdout
+        .take()
+        .expect("ffmpeg process did not have a handle to stdout");
+
+    tokio::spawn(async move {
+        let _ = child
+            .wait()
+            .await
+            .expect("ffmpeg process encountered an error");
+    });
+
+    let mut reader = FramedRead::new(
+        stdout,
+        VideoFrame::new(frame_dimensions.width, frame_dimensions.height),
+    );
+
+    match reader.next().await {
+        Some(Ok(bytes_mut_buffer)) => {
+            println!("extract frame");
+            let frame_buffer: FrameBuffer = FrameBuffer::from_raw(
+            frame_dimensions.width,
+            frame_dimensions.height,
+            bytes_mut_buffer.to_vec(),
+        )        .expect("ffmpeg: parse frame error");
+                Ok(Some(FFmpegFrame::new(frame_buffer)))
+        },
+        _ => Ok(None)
+    }
+}
+
+
 pub fn millisec_to_timestamp(val: u32) -> String {
     let seconds = (val / 1000) % 60;
     let minutes = (val / (1000 * 60)) % 60;
@@ -131,7 +225,7 @@ pub fn millisec_to_timestamp(val: u32) -> String {
 
 pub async fn spawn_ffmpeg_frame_reader(
     args: args::Args,
-    producers: Vec<tokio::sync::mpsc::Sender<FFmpegFrame>>,
+    producers: Vec<tokio::sync::mpsc::Sender<FFmpegFrame<'_>>>,
 ) {
     let fps = get_video_fps(args.input.as_str()).unwrap_or(30.0);
     let stop_frame_count = match args.end_time {
