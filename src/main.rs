@@ -21,6 +21,20 @@ async fn main() {
     let window_name = "mtfg-rs";
     let channel_capacity = 64;
 
+    let video_path = args.input.clone();
+    let start_frame = ffmpeg_stream::get_single_frame(&video_path.as_str(), 0)
+        .await
+        .unwrap()
+        .unwrap();
+    let projection = ffmpeg_stream::transform_frame(
+        (*start_frame.image).clone(),
+        "v360=input=he:in_stereo=sbs:pitch=-25:yaw=0:roll=0:output=flat:d_fov=90:w=800:h=800",
+    )
+    .await
+    .unwrap()
+    .unwrap();
+    projection.image.save("./test.png").unwrap();
+
     let mut frame_sender = vec![];
     let mut frame_receiver = vec![];
     let mut tracking_sender = vec![];
