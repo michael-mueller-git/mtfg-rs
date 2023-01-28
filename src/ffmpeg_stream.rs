@@ -139,36 +139,13 @@ pub fn get_video_fps(video_path: &str) -> Result<f32, Box<dyn std::error::Error>
 }
 
 
-pub async fn get_single_frame(
-    video_path: &str,
-    timestamp_in_ms: u32,
+pub async fn ffmpeg_frame_reader(
+    args: Vec<&str>,
     frame_dimensions: Dimensions,
-) -> Result<Option<FFmpegFrame>, Box<dyn std::error::Error>> {
+    mut frame_handler: impl FnMut(FrameBuffer),
+) {
     let mut cmd = Command::new("ffmpeg");
-    cmd.args([
-        "-hide_banner",
-        "-loglevel",
-        "warning",
-        "-ss",
-        millisec_to_timestamp(timestamp_in_ms).as_str(),
-        "-hwaccel",
-        "auto",
-        "-i",
-        video_path,
-        "-vframes",
-        "1",
-        "-f",
-        "image2pipe",
-        "-pix_fmt",
-        "bgr24",
-        "-fps_mode",
-        "passthrough",
-        "-vcodec",
-        "rawvideo",
-        "-an",
-        "-sn",
-        "-",
-    ]);
+    cmd.args(args);
 
     cmd.stdout(Stdio::piped());
     cmd.stderr(Stdio::null());
@@ -192,21 +169,62 @@ pub async fn get_single_frame(
         VideoFrame::new(frame_dimensions.width, frame_dimensions.height),
     );
 
-    match reader.next().await {
-        Some(Ok(bytes_mut_buffer)) => {
-            println!("extract frame");
-            let frame_buffer: FrameBuffer = FrameBuffer::from_raw(
-                frame_dimensions.width,
-                frame_dimensions.height,
-                bytes_mut_buffer.to_vec(),
-            )
-            .expect("ffmpeg: parse frame error");
-            Ok(Some(FFmpegFrame::new(frame_buffer)))
-        }
-        _ => Ok(None),
+    info!("start ffmpeg");
+
+    while let Some(Ok(bytes_mut_buffer)) = reader.next().await {
+        let frame_buffer: FrameBuffer = FrameBuffer::from_raw(
+            frame_dimensions.width,
+            frame_dimensions.height,
+            bytes_mut_buffer.to_vec(),
+        )
+        .expect("ffmpeg: parse frame error");
+        frame_handler(frame_buffer);
     }
+
+    info!("stop ffmpeg");
 }
 
+pub async fn get_single_frame(
+    video_path: &str,
+    timestamp_in_ms: u32,
+) -> Result<Option<FFmpegFrame>, Box<dyn std::error::Error>> {
+    let mut result = Ok(None);
+    ffmpeg_frame_reader(
+        vec![
+            "-hide_banner",
+            "-loglevel",
+            "warning",
+            "-ss",
+            millisec_to_timestamp(timestamp_in_ms).as_str(),
+            "-hwaccel",
+            "auto",
+            "-i",
+            video_path,
+            "-vframes",
+            "1",
+            "-f",
+            "image2pipe",
+            "-pix_fmt",
+            "bgr24",
+            "-fps_mode",
+            "passthrough",
+            "-vcodec",
+            "rawvideo",
+            "-an",
+            "-sn",
+            "-",
+        ],
+        Dimensions {
+            width: 4096,
+            height: 2048,
+        },
+        |frame_buffer| {
+            result = Ok(Some(FFmpegFrame::new(frame_buffer)));
+        },
+    )
+    .await;
+    result
+}
 pub fn millisec_to_timestamp(val: u32) -> String {
     let seconds = (val / 1000) % 60;
     let minutes = (val / (1000 * 60)) % 60;
