@@ -1,6 +1,3 @@
-#![feature(trait_upcasting)]
-#![allow(incomplete_features)]
-
 mod args;
 mod ffmpeg_stream;
 mod funscript;
