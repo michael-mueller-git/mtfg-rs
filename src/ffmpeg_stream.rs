@@ -172,6 +172,7 @@ pub async fn get_single_frame(
     video_path: &str,
     timestamp_in_ms: u32,
 ) -> Result<Option<FFmpegFrame>, Box<dyn std::error::Error>> {
+    // TODO determine real video resolution
     let d = Dimensions {
         width: 4096,
         height: 2048,
@@ -338,6 +339,5 @@ pub async fn ffmpeg_stream_reader(
         }
     }
 
-    // TODO ensure we can read all remaining frames in buffer
     info!("stop ffmpeg");
 }
