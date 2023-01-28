@@ -36,7 +36,7 @@ async fn main() {
             .replace("{pitch}", format!("{pitch}").as_str())
             .replace("{yaw}", format!("{yaw}").as_str());
         let mut projection =
-            ffmpeg_stream::transform_frame((*start_frame.image).clone(), &video_filter.as_str())
+            ffmpeg_stream::transform_frame(&*start_frame.image, &video_filter.as_str())
                 .await
                 .unwrap()
                 .unwrap();

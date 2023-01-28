@@ -277,10 +277,10 @@ pub async fn get_single_frame(
     }
 }
 
-pub async fn transform_frame(
-    frame: DynamicImage,
+pub async fn transform_frame<'a>(
+    frame: &DynamicImage,
     video_filter: &str,
-) -> Result<Option<FFmpegFrame>, Box<dyn std::error::Error>> {
+) -> Result<Option<FFmpegFrame<'a>>, Box<dyn std::error::Error>> {
     let input_dimensions = Dimensions {
         width: frame.width(),
         height: frame.height() as u32,
@@ -322,7 +322,7 @@ pub async fn transform_frame(
             "-",
         ],
         output_dimensions,
-        Some(&frame.into_rgb8()),
+        Some(&frame.as_rgb8().unwrap()),
     )
     .await;
 
