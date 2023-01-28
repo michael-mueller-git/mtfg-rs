@@ -16,7 +16,7 @@ use std::sync::Arc;
 use tokio::process::Command;
 use tokio_util::codec::Decoder;
 use tokio_util::codec::FramedRead;
-// use fortify::*;
+use fortify::*;
 
 use crate::args;
 
@@ -63,8 +63,10 @@ impl Decoder for VideoFrame {
     }
 }
 
-pub trait MatTrait: opencv::core::ToInputOutputArray + opencv::core::ToInputArray {}
-impl MatTrait for opencv::core::Mat {}
+#[derive(Lower)]
+pub struct OpencvMatWithLifetime<'a> {
+   pub mat: &'a mut opencv::core::Mat,
+}
 
 #[derive(Clone)]
 pub struct FFmpegFrame<'a> {
@@ -81,18 +83,22 @@ impl<'a> FFmpegFrame<'a> {
         }
     }
 
-    pub fn get_opencv_frame(&mut self) -> Box<dyn MatTrait + 'a> {
+    pub fn get_opencv_frame(&mut self) -> Fortify<OpencvMatWithLifetime> {
         unsafe {
-            Box::new(
-                opencv::prelude::Mat::new_rows_cols_with_data(
-                    self.image.height() as i32,
-                    self.image.width() as i32,
+            fortify! {
+                let ensure_lifetime = &self.image;
+                let mut m = opencv::prelude::Mat::new_rows_cols_with_data(
+                    ensure_lifetime.height() as i32,
+                    ensure_lifetime.width() as i32,
                     opencv::core::CV_8UC3,
-                    self.image.as_rgb8().unwrap().as_ptr() as *mut _,
+                    ensure_lifetime.as_rgb8().unwrap().as_ptr() as *mut _,
                     opencv::core::Mat_AUTO_STEP,
                 )
-                .unwrap(),
-            )
+                .unwrap();
+                yield OpencvMatWithLifetime {
+                    mat: &mut m,
+                };
+            }
         }
     }
 }

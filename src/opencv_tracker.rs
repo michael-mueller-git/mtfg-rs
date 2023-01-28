@@ -27,18 +27,20 @@ pub async fn get_rois(
     .unwrap();
 
     while input.len() < boxes {
-        match opencv::highgui::select_roi_for_window(window_name, &*opencv_frame, true, false) {
+        opencv_frame.with_mut(|frame1| {
+        match opencv::highgui::select_roi_for_window(window_name, frame1.mat, true, false) {
             Ok(result) => {
                 if result.x != 0 && result.y != 0 {
-                    opencv::imgproc::rectangle(
-                        &mut *opencv_frame,
-                        result,
-                        opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
-                        2,
-                        8,
-                        0,
-                    )
-                    .unwrap();
+                    // opencv_frame.with_mut(|frame| 
+                    // opencv::imgproc::rectangle(
+                    //     &mut frame.mat,
+                    //     result,
+                    //     opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
+                    //     2,
+                    //     8,
+                    //     0,
+                    // )
+                    // .unwrap());
                     input.push(result);
                 } else {
                     error!("Invalid Input");
@@ -48,6 +50,7 @@ pub async fn get_rois(
                 error!("Input Error");
             }
         }
+        });
     }
 
     input
@@ -69,23 +72,26 @@ pub async fn track_feature(
         return;
     };
 
-    let opencv_frame = init_frame.get_opencv_frame();
-    if tracker.obj.init(&*opencv_frame, init_box).is_err() {
+    let mut opencv_frame = init_frame.get_opencv_frame();
+    opencv_frame.with_mut(|frame| {
+    if tracker.obj.init(frame.mat, init_box).is_err() {
         error!("tracker setup failed");
-        return;
+        // return;
     }
+    });
 
     let mut bounding_box = init_box;
     while let Some(mut frame) = consumer.recv().await {
-        let opencv_frame = frame.get_opencv_frame();
+        let mut opencv_frame = frame.get_opencv_frame();
+        opencv_frame.with_mut(|frame| {
         if tracker
             .obj
-            .update(&*opencv_frame, &mut bounding_box)
+            .update(frame.mat, &mut bounding_box)
             .is_err()
         {
             error!("tracking lost");
-            break;
-        }
+            // break;
+        }});
 
         if producer.send(bounding_box).await.is_err() {
             error!("tracker: error adding box to process queue");
@@ -98,37 +104,41 @@ pub async fn preview_tracking_boxes(
     window_name: &str,
     frame: &mut FFmpegFrame<'_>,
     boxes: &Vec<opencv::core::Rect>,
-    _text: &str,
+    text: &str,
 ) -> bool {
     let mut opencv_frame = frame.get_opencv_frame();
     for tracking_box in boxes {
+        opencv_frame.with_mut(|frame|
         opencv::imgproc::rectangle(
-            &mut *opencv_frame,
+            &mut frame.mat,
             *tracking_box,
             opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
             2,
             8,
             0,
         )
-        .unwrap();
+        .unwrap());
     }
 
-    // if !text.is_empty() {
-    //     opencv::highgui::add_text_with_font(
-    //         &opencv_frame,
-    //         text,
-    //         opencv::core::Point::new(5, 30),
-    //         "Hack",
-    //         20,
-    //         opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
-    //         0, /* opencv::highgui::QtFontWeights::QT_FONT_NORMAL */
-    //         0, /* opencv::highgui::QtFontStyles::QT_STYLE_NORMAL */
-    //         0,
-    //     )
-    //     .unwrap();
-    // }
+    opencv_frame.with_mut(|frame| {
+    if !text.is_empty() {
+        opencv::highgui::add_text_with_font(
+            frame.mat,
+            text,
+            opencv::core::Point::new(5, 30),
+            "Hack",
+            20,
+            opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
+            0, /* opencv::highgui::QtFontWeights::QT_FONT_NORMAL */
+            0, /* opencv::highgui::QtFontStyles::QT_STYLE_NORMAL */
+            0,
+        )
+        .unwrap();
+    }
+    });
 
-    opencv::highgui::imshow(window_name, &*opencv_frame).unwrap();
+    opencv_frame.with_mut(|frame|
+        opencv::highgui::imshow(window_name, frame.mat).unwrap());
 
     let key = opencv::highgui::wait_key(1).unwrap();
     if key == 'q' as i32 {

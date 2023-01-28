@@ -40,17 +40,18 @@ async fn main() {
     // let opencv_frame4 = *opencv_frame3.get_opencv_frame();
 
     let mut opencv_frame3 = opencv_frame.unwrap().unwrap();
-    let opencv_frame4 = opencv_frame3.get_opencv_frame();
+    let mut opencv_frame4 = opencv_frame3.get_opencv_frame();
 
-    // let opencv_frame4 = opencv_frame.unwrap().unwrap().get_opencv_frame();
+    // let mut opencv_frame4 = opencv_frame.unwrap().unwrap().get_opencv_frame();
 
     std::thread::sleep(std::time::Duration::from_millis(1000));
+    opencv_frame4.with_mut(|frame| 
     opencv::imgcodecs::imwrite(
         "./test.png",
-        &*opencv_frame4,
+        frame.mat,
         &opencv::core::Vector::default(),
     )
-    .unwrap();
+    .unwrap());
     std::thread::sleep(std::time::Duration::from_millis(1000));
     // opencv_frame3.image.save("test_image.png").unwrap();
 
