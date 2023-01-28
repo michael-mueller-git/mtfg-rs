@@ -233,6 +233,34 @@ pub fn millisec_to_timestamp(val: u32) -> String {
     format!("{hours:0>2}:{minutes:0>2}:{seconds:0>2}.{millis:0>3}")
 }
 
+fn get_dimension_from_video_filter(video_filter: &str) -> Option<Dimensions> {
+let mut video_dimensions: Option<Dimensions> = None;
+    let re = regex::Regex::new(r"w=(\d+):h=(\d+)").unwrap();
+    for cap in re.captures_iter(video_filter) {
+        let w = cap[1]
+            .parse::<u32>()
+            .expect("failed to parse video filter width");
+        let h = cap[2]
+            .parse::<u32>()
+            .expect("failed to parse video filter height");
+        video_dimensions = Some(Dimensions::new(w, h));
+    }
+
+    if video_dimensions.is_none() {
+        let re = regex::Regex::new(r"scale=(\d+):(\d+)").unwrap();
+        for cap in re.captures_iter(video_filter) {
+            let w = cap[1]
+                .parse::<u32>()
+                .expect("failed to parse video filter width");
+            let h = cap[2]
+                .parse::<u32>()
+                .expect("failed to parse video filter height");
+            video_dimensions = Some(Dimensions::new(w, h));
+        }
+    }
+    video_dimensions
+}
+
 pub async fn spawn_ffmpeg_frame_reader(
     args: args::Args,
     producers: Vec<tokio::sync::mpsc::Sender<FFmpegFrame<'_>>>,
@@ -251,32 +279,7 @@ pub async fn spawn_ffmpeg_frame_reader(
         None => 0,
     };
 
-    let mut video_dimensions: Option<Dimensions> = None;
-    let re = regex::Regex::new(r"w=(\d+):h=(\d+)").unwrap();
-    for cap in re.captures_iter(args.video_filter.as_str()) {
-        let w = cap[1]
-            .parse::<u32>()
-            .expect("failed to parse video filter width");
-        let h = cap[2]
-            .parse::<u32>()
-            .expect("failed to parse video filter height");
-        video_dimensions = Some(Dimensions::new(w, h));
-    }
-
-    if video_dimensions.is_none() {
-        let re = regex::Regex::new(r"scale=(\d+):(\d+)").unwrap();
-        for cap in re.captures_iter(args.video_filter.as_str()) {
-            let w = cap[1]
-                .parse::<u32>()
-                .expect("failed to parse video filter width");
-            let h = cap[2]
-                .parse::<u32>()
-                .expect("failed to parse video filter height");
-            video_dimensions = Some(Dimensions::new(w, h));
-        }
-    }
-
-    let Some(video_dimensions) = video_dimensions else {
+    let Some(video_dimensions) = get_dimension_from_video_filter(&args.video_filter.as_str()) else {
         error!("Failed to parse video filter dimensions");
         return;
     };
