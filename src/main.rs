@@ -22,7 +22,7 @@ async fn main() {
     let channel_capacity = 64;
 
     let video_path = args.input.clone();
-    let start_frame = ffmpeg_stream::get_single_frame(&video_path.as_str(), 0)
+    let start_frame = ffmpeg_stream::get_single_frame(&video_path.as_str(), args.start_time as u32)
         .await
         .unwrap()
         .unwrap();
@@ -31,14 +31,15 @@ async fn main() {
     let mut yaw: i8 = 0;
     let mut video_filter: String;
     loop {
-        video_filter = args.video_filter.replace("{pitch}", format!("{pitch}").as_str()).replace("{yaw}", format!("{yaw}").as_str());
-        let mut projection = ffmpeg_stream::transform_frame(
-            (*start_frame.image).clone(),
-            &video_filter.as_str(),
-        )
-        .await
-        .unwrap()
-        .unwrap();
+        video_filter = args
+            .video_filter
+            .replace("{pitch}", format!("{pitch}").as_str())
+            .replace("{yaw}", format!("{yaw}").as_str());
+        let mut projection =
+            ffmpeg_stream::transform_frame((*start_frame.image).clone(), &video_filter.as_str())
+                .await
+                .unwrap()
+                .unwrap();
         projection
             .get_opencv_frame()
             .with_mut(|frame| opencv::highgui::imshow(window_name, frame.mat).unwrap());
