@@ -19,5 +19,5 @@ cargo +nightly build --release
 
 ## TODO
 
-- Add Interpolation for `skip_frames` > 0.
+- Improve Interpolation for `skip_frames` > 0.
 - Skip Frames start point calc maybe wrong?
