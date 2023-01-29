@@ -1,5 +1,4 @@
 json = require "json"
-rdp = require "RamerDouglasPeucker"
 -- mtfg-rs LUA Wrappper Version 0.0.1
 
 -- global var
@@ -11,16 +10,15 @@ tmpFileName = "funscript_actions.json"
 tmpFileExists = false
 stopAtNextActionPoint = true
 filterSimilarTimestamps = true
-epsilon = 1.8
-epsilonPost = 1.05
+epsilon = 10.0
 persons = "1"
 personsOptions = {"1", "2"}
 filterIdx = 1
-currentScript = nil
-filterOptions = {
-    "pad='max(ih,iw):max(ih,iw):max(ih,iw)/2:max(ih,iw)/2',scale=512:512",
-    "v360=input=he:in_stereo=sbs:pitch=0:yaw=0:roll=0:output=flat:d_fov=98:w=512:h=512",
-    "v360=input=he:in_stereo=sbs:pitch=-25:yaw=0:roll=0:output=flat:d_fov=98:w=512:h=512"
+filterNames = {
+    "VR-3D-SBS-180"
+}
+filterValues = {
+    "v360=input=he:in_stereo=sbs:pitch={pitch}:yaw={yaw}:roll=0:output=flat:d_fov={fov}:w=512:h=512"
 }
 
 function exists(file)
@@ -86,7 +84,7 @@ function binding.start_funscript_generator()
     table.insert(args, "-p")
     table.insert(args, persons)
     table.insert(args, "-f")
-    table.insert(args, filterOptions[filterIdx])
+    table.insert(args, filterValues[filterIdx])
 
     if next_action then
         table.insert(args, "-e")
@@ -178,67 +176,6 @@ function update(delta)
 end
 
 
-table.filter = function(t, filterIter)
-  local out = {}
-
-  for idx, item in pairs(t) do
-    if filterIter(item) then
-        out[idx] = item
-    end
-  end
-
-  return out
-end
-
-function simplify(rdpEpsilon)
-    print("simplify with epsilon", rdpEpsilon)
-    scriptIdx = ofs.ActiveIdx()
-
-    if not currentScript then
-        print("fetch new data")
-        currentScript = ofs.Script(scriptIdx)
-    end
-
-    script = currentScript
-    local selection = table.filter(script.actions, function(item) return item.selected end)
-    local result = rdp(selection, rdpEpsilon, true, "at", "pos")
-
-    for idx, action in ipairs(script.actions) do
-        script:markForRemoval(idx)
-    end
-    script:removeMarked()
-
-    local filtered = 0
-    local fps = player.FPS()
-    local frame_time = 1.0/fps
-    for idx, action in ipairs(result) do
-        local closest_action, _ = script:closestAction(action.at)
-        local new_action = Action.new(action.at, action.pos, true)
-        print("new", action.at, action.pos, new_action.at, new_action.pos)
-        if closest_action then
-            -- print("found closest action", action.at, closest_action.at)
-            -- print("closest action diff", math.abs(closest_action.at - new_action.at), frame_time)
-        end
-        if filterSimilarTimestamps and closest_action and math.abs(closest_action.at - new_action.at) <= frame_time then
-            filtered = filtered + 1
-            -- print("filter")
-        else
-            script.actions:add(new_action)
-            -- print("add")
-        end
-    end
-
-    -- for idx, a in ipairs(script.actions) do
-    --     print("content", idx, a.at)
-    -- end
-
-    if filterSimilarTimestamps then
-        print('filtered timestamps', filtered)
-    end
-
-    script:commit()
-end
-
 function gui()
     ofs.Text("Status: "..status)
     ofs.Separator()
@@ -254,7 +191,7 @@ function gui()
 
     ofs.Text("  o ")
     ofs.SameLine()
-    filterIdx, _ = ofs.Combo("Video Filter", filterIdx, filterOptions)
+    filterIdx, _ = ofs.Combo("Video Filter", filterIdx, filterNames)
 
     ofs.Separator()
     ofs.Text("Action:")
@@ -279,27 +216,4 @@ function gui()
             import_funscript_generator_json_result()
         end
     end
-
-    ofs.Separator()
-    ofs.Text("Post-Process:")
-
-    ofs.Text("  o ")
-    ofs.SameLine()
-    if ofs.Button("undo") then
-        scriptIdx = ofs.ActiveIdx()
-        ofs.Undo()
-    end
-
-    ofs.Text("  o ")
-    ofs.SameLine()
-    epsilonPost, epsilonPostChanged  = ofs.Slider("Epsilon Post-Process", epsilonPost, 0.0, 10.0)
-    if epsilonPostChanged then
-        simplify(epsilonPost)
-    end
-    ofs.SameLine()
-    if ofs.Button("apply") then
-        currentScript = nil
-    end
-
-
 end
