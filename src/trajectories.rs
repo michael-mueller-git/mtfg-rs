@@ -48,15 +48,16 @@ impl TrackingTrajectories {
             .unwrap();
         for (idx, t) in self.trajectories.iter().enumerate() {
             match self.trackers {
+                // NOTE: x has an offset of 1 frame becaus init frame box is not included in score
                 1 => {
                     result.push(mint::Point2 {
-                        x: (idx * (self.timestep as usize)) as i32,
+                        x: ((idx + 1) * (self.timestep as usize)) as i32,
                         y: t.first().unwrap().y - min_y,
                     });
                 }
                 2 => {
                     result.push(mint::Point2 {
-                        x: (idx * (self.timestep as usize)) as i32,
+                        x: ((idx + 1) * (self.timestep as usize)) as i32,
                         y: t.get(0).unwrap().y - t.get(1).unwrap().y,
                     });
                 }

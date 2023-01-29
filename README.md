@@ -16,8 +16,3 @@ cargo +nightly build --release
 ## What is the current goal of this project?
 
 - Implement only the most necessary functions needed to create a funscript with a opencv video tracker.
-
-## TODO
-
-- Improve Interpolation for `skip_frames` > 0.
-- Skip Frames start point calc maybe wrong?
