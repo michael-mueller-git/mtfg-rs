@@ -13,6 +13,8 @@ filterSimilarTimestamps = true
 epsilon = 10.0
 persons = "1"
 personsOptions = {"1", "2"}
+frameStepSize = 1
+frameStepSizes = {"1", "2", "3", "4", "5"}
 filterIdx = 1
 filterNames = {
     "VR-3D-SBS-180"
@@ -81,6 +83,8 @@ function binding.start_funscript_generator()
     table.insert(args, tmpFile)
     table.insert(args, "--epsilon")
     table.insert(args, tostring(epsilon))
+    table.insert(args, "--skip")
+    table.insert(args, frameStepSize - 1)
     table.insert(args, "-p")
     table.insert(args, persons)
     table.insert(args, "-f")
@@ -184,6 +188,10 @@ function gui()
     ofs.Text("  o ")
     ofs.SameLine()
     persons, _ = ofs.Combo("Moving Persons", persons, personsOptions)
+
+    ofs.Text("  o ")
+    ofs.SameLine()
+    frameStepSize, _ = ofs.Combo("Frame Step Size", frameStepSize, frameStepSizes)
 
     ofs.Text("  o ")
     ofs.SameLine()

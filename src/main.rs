@@ -174,9 +174,39 @@ async fn main() {
         Some(0),
     );
 
-    let keep = ramer_douglas_peucker::rdp(&raw_score, epsilon);
+    let raw_score_vec = raw_score
+        .iter()
+        .map(|item| (item.x as f64, item.y as f64))
+        .collect::<Vec<_>>();
 
-    let score = raw_score
+    let mut interploated_score: Vec<mint::Point2<i32>> = raw_score;
+    if skip_frames > 0 {
+        let opts = cubic_spline::SplineOpts::new().tension(0.5); // TODO hyperparam
+
+        let Ok(points) = cubic_spline::Points::try_from(&raw_score_vec) else {
+            error!("Create Interpolation failed");
+            return;
+        };
+
+        let calculated_points = points.calc_spline(&opts.num_of_segments(skip_frames)).unwrap();
+
+        interploated_score = calculated_points
+            .into_inner()
+            .iter()
+            .map(|item| mint::Point2 {
+                x: item.x as i32,
+                y: item.y as i32,
+            })
+            .collect();
+    }
+
+    let mut keep = (0..interploated_score.len()).collect();
+
+    if epsilon > 0.01 {
+        keep = ramer_douglas_peucker::rdp(&interploated_score, epsilon);
+    }
+
+    let score = interploated_score
         .iter()
         .enumerate()
         .filter(|(idx, _)| keep.contains(idx))
