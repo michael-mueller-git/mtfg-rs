@@ -20,4 +20,3 @@ cargo +nightly build --release
 ## TODO
 
 - Add Interpolation for `skip_frames` > 0.
-- Implement ROI VR Menu
