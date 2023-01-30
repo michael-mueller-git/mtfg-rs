@@ -9,6 +9,9 @@ mod ui;
 use log::error;
 use log::info;
 
+const WINDOW_NAME: &'static str = "mtfg-rs";
+const CHANNEL_CAPACITY: usize = 64;
+
 #[tokio::main(worker_threads = 6)]
 async fn main() {
     let Some(mut args) = args::parse_args() else {
@@ -17,21 +20,13 @@ async fn main() {
 
     logging::setup_logging();
 
-    if args.persons > 2 {
-        error!("invalid args.person");
-        return;
-    }
-
-    let window_name = "mtfg-rs";
-    let channel_capacity = 64;
-
-    let video_path = args.input.clone();
-    let start_frame = ffmpeg::get_single_frame(&video_path.as_str(), args.start_time as u32)
+    let preview_frame = ffmpeg::get_single_frame(&args.input.as_str(), args.start_time as u32)
         .await
         .unwrap()
         .unwrap();
 
-    args.video_filter = ui::get_vr_viewport(window_name, &*start_frame.image, args.video_filter).await;
+    args.video_filter =
+        ui::get_vr_viewport(WINDOW_NAME, &*preview_frame.image, args.video_filter).await;
 
     let mut frame_sender = vec![];
     let mut frame_receiver = vec![];
@@ -40,18 +35,18 @@ async fn main() {
 
     for _ in 0..args.persons {
         let (frame_tx, frame_rx) =
-            tokio::sync::mpsc::channel::<ffmpeg::FFmpegFrame>(channel_capacity);
+            tokio::sync::mpsc::channel::<ffmpeg::FFmpegFrame>(CHANNEL_CAPACITY);
         frame_sender.push(frame_tx);
         frame_receiver.push(frame_rx);
 
         let (tracking_tx, tracking_rx) =
-            tokio::sync::mpsc::channel::<opencv::core::Rect>(channel_capacity);
+            tokio::sync::mpsc::channel::<opencv::core::Rect>(CHANNEL_CAPACITY);
         tracking_sender.push(tracking_tx);
         tracking_receiver.push(tracking_rx);
     }
 
     let (frame_tx, mut frame_rx) =
-        tokio::sync::mpsc::channel::<ffmpeg::FFmpegFrame>(channel_capacity);
+        tokio::sync::mpsc::channel::<ffmpeg::FFmpegFrame>(CHANNEL_CAPACITY);
     frame_sender.push(frame_tx);
 
     let Ok(video_fps) = ffmpeg::get_video_fps(args.input.as_str()) else {
@@ -70,15 +65,13 @@ async fn main() {
         return;
     };
 
-    let mut tracking_boxes =
-        ui::get_rois(args.persons as usize, window_name, &mut frame).await;
+    let mut tracking_boxes = ui::get_rois(args.persons as usize, WINDOW_NAME, &mut frame).await;
 
     while let Some(b) = tracking_boxes.pop() {
         if let Some(r) = frame_receiver.pop() {
             if let Some(p) = tracking_sender.pop() {
                 tokio::task::spawn_blocking(move || {
-                    tokio::runtime::Handle::current()
-                        .block_on(tracker::track_feature(b, r, p));
+                    tokio::runtime::Handle::current().block_on(tracker::track_feature(b, r, p));
                 });
             } else {
                 error!("not enough sender obj available");
@@ -110,7 +103,7 @@ async fn main() {
                 / start_time.elapsed().as_millis();
 
             stop = ui::preview_tracking_boxes(
-                window_name,
+                WINDOW_NAME,
                 &mut frame,
                 &result,
                 format!("{fps} fps").as_str(),
@@ -151,7 +144,9 @@ async fn main() {
             return;
         };
 
-        let calculated_points = points.calc_spline(&opts.num_of_segments(args.frame_step_size - 1)).unwrap();
+        let calculated_points = points
+            .calc_spline(&opts.num_of_segments(args.frame_step_size - 1))
+            .unwrap();
 
         interploated_score = calculated_points
             .into_inner()

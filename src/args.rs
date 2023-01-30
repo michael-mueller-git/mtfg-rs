@@ -60,7 +60,7 @@ impl Clone for Args {
             preview_frames: self.preview_frames,
             video_filter: self.video_filter.clone(),
             persons: self.persons,
-            epsilon: self.epsilon
+            epsilon: self.epsilon,
         }
     }
 }

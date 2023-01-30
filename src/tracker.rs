@@ -55,5 +55,3 @@ pub async fn track_feature(
         }
     }
 }
-
-

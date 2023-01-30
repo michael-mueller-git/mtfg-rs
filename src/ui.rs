@@ -1,8 +1,8 @@
+use crate::ffmpeg;
 use crate::ffmpeg::FFmpegFrame;
+use image::DynamicImage;
 use log::error;
 use log::info;
-use image::DynamicImage;
-use crate::ffmpeg;
 
 pub async fn get_rois(
     boxes: usize,
@@ -60,7 +60,11 @@ pub async fn get_rois(
     input
 }
 
-pub async fn get_vr_viewport(window_name: &str, frame: &DynamicImage, video_filter_template: String) -> String {
+pub async fn get_vr_viewport(
+    window_name: &str,
+    frame: &DynamicImage,
+    video_filter_template: String,
+) -> String {
     let mut pitch: i8 = -25;
     let mut yaw: i8 = 0;
     let mut fov: u8 = 90;
@@ -70,11 +74,10 @@ pub async fn get_vr_viewport(window_name: &str, frame: &DynamicImage, video_filt
             .replace("{fov}", format!("{fov}").as_str())
             .replace("{pitch}", format!("{pitch}").as_str())
             .replace("{yaw}", format!("{yaw}").as_str());
-        let mut projection =
-            ffmpeg::transform_frame(frame, &video_filter.as_str())
-                .await
-                .unwrap()
-                .unwrap();
+        let mut projection = ffmpeg::transform_frame(frame, &video_filter.as_str())
+            .await
+            .unwrap()
+            .unwrap();
         projection
             .get_opencv_frame()
             .with_mut(|frame| opencv::highgui::imshow(window_name, frame.mat).unwrap());
