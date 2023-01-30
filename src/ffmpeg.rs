@@ -339,7 +339,7 @@ pub async fn transform_frame<'a>(
     }
 }
 
-pub fn millisec_to_timestamp(val: u32) -> String {
+fn millisec_to_timestamp(val: u32) -> String {
     let seconds = (val / 1000) % 60;
     let minutes = (val / (1000 * 60)) % 60;
     let hours = (val / (1000 * 60 * 60)) % 24;
@@ -438,7 +438,7 @@ pub async fn ffmpeg_stream_reader(
         .expect("ffmpeg: parse frame error");
         frame_number += 1;
 
-        if ((frame_number - 1) % (args.skip_frames + 1)) != 0 {
+        if ((frame_number - 1) % args.frame_step_size) != 0 {
             continue;
         }
 

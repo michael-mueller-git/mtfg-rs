@@ -1,16 +1,20 @@
 mod args;
-mod ffmpeg_stream;
+mod ffmpeg;
 mod funscript;
 mod logging;
-mod opencv_tracker;
+mod tracker;
 mod trajectories;
+mod ui;
 
 use log::error;
 use log::info;
 
 #[tokio::main(worker_threads = 6)]
 async fn main() {
-    let mut args = args::parse_args();
+    let Some(mut args) = args::parse_args() else {
+        return;
+    };
+
     logging::setup_logging();
 
     if args.persons > 2 {
@@ -22,7 +26,7 @@ async fn main() {
     let channel_capacity = 64;
 
     let video_path = args.input.clone();
-    let start_frame = ffmpeg_stream::get_single_frame(&video_path.as_str(), args.start_time as u32)
+    let start_frame = ffmpeg::get_single_frame(&video_path.as_str(), args.start_time as u32)
         .await
         .unwrap()
         .unwrap();
@@ -38,7 +42,7 @@ async fn main() {
             .replace("{pitch}", format!("{pitch}").as_str())
             .replace("{yaw}", format!("{yaw}").as_str());
         let mut projection =
-            ffmpeg_stream::transform_frame(&*start_frame.image, &video_filter.as_str())
+            ffmpeg::transform_frame(&*start_frame.image, &video_filter.as_str())
                 .await
                 .unwrap()
                 .unwrap();
@@ -70,7 +74,7 @@ async fn main() {
 
     for _ in 0..args.persons {
         let (frame_tx, frame_rx) =
-            tokio::sync::mpsc::channel::<ffmpeg_stream::FFmpegFrame>(channel_capacity);
+            tokio::sync::mpsc::channel::<ffmpeg::FFmpegFrame>(channel_capacity);
         frame_sender.push(frame_tx);
         frame_receiver.push(frame_rx);
 
@@ -81,25 +85,25 @@ async fn main() {
     }
 
     let (frame_tx, mut frame_rx) =
-        tokio::sync::mpsc::channel::<ffmpeg_stream::FFmpegFrame>(channel_capacity);
+        tokio::sync::mpsc::channel::<ffmpeg::FFmpegFrame>(channel_capacity);
     frame_sender.push(frame_tx);
 
     // TODO: handle moved values better
-    let skip_frames = args.skip_frames;
+    let frame_step_size = args.frame_step_size;
     let number_of_tracking_boxes = args.persons as usize;
     let epsilon = args.epsilon;
     let preview_frames = args.preview_frames;
     let video_start_time_in_ms = args.start_time;
     let output = args.output.clone();
 
-    let Ok(video_fps) = ffmpeg_stream::get_video_fps(args.input.as_str()) else {
+    let Ok(video_fps) = ffmpeg::get_video_fps(args.input.as_str()) else {
         error!("could not determine video fps");
         return;
     };
 
     tokio::task::spawn_blocking(move || {
         tokio::runtime::Handle::current()
-            .block_on(ffmpeg_stream::ffmpeg_stream_reader(args, frame_sender));
+            .block_on(ffmpeg::ffmpeg_stream_reader(args, frame_sender));
     });
 
     let Some(mut frame) = frame_rx.recv().await else {
@@ -108,14 +112,14 @@ async fn main() {
     };
 
     let mut tracking_boxes =
-        opencv_tracker::get_rois(number_of_tracking_boxes, window_name, &mut frame).await;
+        ui::get_rois(number_of_tracking_boxes, window_name, &mut frame).await;
 
     while let Some(b) = tracking_boxes.pop() {
         if let Some(r) = frame_receiver.pop() {
             if let Some(p) = tracking_sender.pop() {
                 tokio::task::spawn_blocking(move || {
                     tokio::runtime::Handle::current()
-                        .block_on(opencv_tracker::track_feature(b, r, p));
+                        .block_on(tracker::track_feature(b, r, p));
                 });
             } else {
                 error!("not enough sender obj available");
@@ -142,11 +146,11 @@ async fn main() {
 
         let mut stop = false;
 
-        if ((frame_counter - 1) % (preview_frames + 1)) == 0 {
-            let fps = ((skip_frames + 1) * frame_counter * 1000) as u128
+        if ((frame_counter - 1) % preview_frames) == 0 {
+            let fps = (frame_step_size * frame_counter * 1000) as u128
                 / start_time.elapsed().as_millis();
 
-            stop = opencv_tracker::preview_tracking_boxes(
+            stop = ui::preview_tracking_boxes(
                 window_name,
                 &mut frame,
                 &result,
@@ -163,7 +167,7 @@ async fn main() {
     }
 
     let mut tracking_result = trajectories::TrackingTrajectories::new(
-        skip_frames + 1,
+        frame_step_size,
         number_of_tracking_boxes,
         tracking_trajectories,
     );
@@ -180,7 +184,7 @@ async fn main() {
         .collect::<Vec<_>>();
 
     let mut interploated_score: Vec<mint::Point2<i32>> = raw_score;
-    if skip_frames > 0 {
+    if frame_step_size > 1 {
         let opts = cubic_spline::SplineOpts::new().tension(0.5); // TODO hyperparam
 
         let Ok(points) = cubic_spline::Points::try_from(&raw_score_vec) else {
@@ -188,7 +192,7 @@ async fn main() {
             return;
         };
 
-        let calculated_points = points.calc_spline(&opts.num_of_segments(skip_frames)).unwrap();
+        let calculated_points = points.calc_spline(&opts.num_of_segments(frame_step_size - 1)).unwrap();
 
         interploated_score = calculated_points
             .into_inner()
