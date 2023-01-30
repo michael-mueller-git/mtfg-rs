@@ -48,7 +48,7 @@ impl TrackingTrajectories {
             .unwrap();
         for (idx, t) in self.trajectories.iter().enumerate() {
             match self.trackers {
-                // NOTE: x has an offset of 1 frame becaus init frame box is not included in score
+                // NOTE: x has an offset of 1 frame because init frame box is not included in score
                 1 => {
                     result.push(mint::Point2 {
                         x: ((idx + 1) * (self.timestep as usize)) as i32,

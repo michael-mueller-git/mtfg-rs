@@ -4,6 +4,9 @@ use image::DynamicImage;
 use log::error;
 use log::info;
 
+const FONT_NAME: &'static str = "Hack";
+const FONT_SIZE: i32 = 18;
+
 pub async fn get_rois(
     boxes: usize,
     window_name: &str,
@@ -24,8 +27,8 @@ pub async fn get_rois(
             frame.mat,
             "Select Tracking Features",
             opencv::core::Point::new(5, 30),
-            "Hack",
-            20,
+            FONT_NAME,
+            FONT_SIZE,
             opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
             0, /* opencv::highgui::QtFontWeights::QT_FONT_NORMAL */
             0, /* opencv::highgui::QtFontStyles::QT_STYLE_NORMAL */
@@ -86,6 +89,7 @@ pub async fn get_vr_viewport(
             match char::from_u32(key.try_into().unwrap()) {
                 Some('q') => break,
                 Some(' ') => break,
+                Some('\n') => break,
                 Some('w') => pitch += 5,
                 Some('s') => pitch -= 5,
                 Some('a') => yaw -= 5,
@@ -127,8 +131,8 @@ pub async fn preview_tracking_boxes(
                 frame.mat,
                 text,
                 opencv::core::Point::new(5, 30),
-                "Hack",
-                20,
+                FONT_NAME,
+                FONT_SIZE,
                 opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
                 0, /* opencv::highgui::QtFontWeights::QT_FONT_NORMAL */
                 0, /* opencv::highgui::QtFontStyles::QT_STYLE_NORMAL */
