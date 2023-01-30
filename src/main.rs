@@ -54,10 +54,10 @@ async fn main() {
         return;
     };
 
-    let ffmeg_args = args.clone();
+    let ffmpeg_args = args.clone();
     tokio::task::spawn_blocking(move || {
         tokio::runtime::Handle::current()
-            .block_on(ffmpeg::ffmpeg_stream_reader(ffmeg_args, frame_sender));
+            .block_on(ffmpeg::ffmpeg_stream_reader(ffmpeg_args, frame_sender));
     });
 
     let Some(mut frame) = frame_rx.recv().await else {
