@@ -10,20 +10,24 @@ use log::error;
 )]
 pub struct Args {
     /// Path to Video File
-    #[clap(long = "input")]
+    #[clap(short = 'i', long = "input")]
     pub input: String,
 
     /// Output Path
-    #[clap(long = "output")]
+    #[clap(short = 'o', long = "output")]
     pub output: String,
 
     /// Start time in milliseconds
-    #[clap(long = "start")]
+    #[clap(short = 's', long = "start")]
     pub start_time: f32,
 
     /// End time in milliseconds
     #[clap(long = "end")]
     pub end_time: Option<f32>,
+
+    /// Number of moving persons
+    #[clap(long = "persons", default_value = "1")]
+    pub persons: u8,
 
     /// Frame Step Size
     #[clap(long = "step", default_value = "2")]
@@ -39,10 +43,6 @@ pub struct Args {
         default_value = "v360=input=he:in_stereo=sbs:pitch={pitch}:yaw={yaw}:roll=0:output=flat:d_fov={fov}:w=800:h=800"
     )]
     pub video_filter: String,
-
-    /// Number of moving persons
-    #[clap(long = "persons", default_value = "1")]
-    pub persons: u8,
 
     /// epsilon value for Ramer–Douglas–Peucker algorithm
     #[clap(long = "epsilon")]
