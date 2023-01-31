@@ -72,6 +72,8 @@ pub async fn get_vr_viewport(
     let mut yaw: i8 = 0;
     let mut fov: u8 = 90;
     let mut video_filter: String;
+    let mut loop_counter: u64 = 0;
+
     loop {
         video_filter = video_filter_template
             .replace("{fov}", format!("{fov}").as_str())
@@ -81,9 +83,28 @@ pub async fn get_vr_viewport(
             .await
             .unwrap()
             .unwrap();
-        projection
-            .get_opencv_frame()
-            .with_mut(|frame| opencv::highgui::imshow(window_name, frame.mat).unwrap());
+        loop_counter += 1;
+        projection.get_opencv_frame().with_mut(|frame| {
+            if loop_counter > 1 {
+                // TODO Bug: window_QT.cpp:150: error: (-27:Null pointer) NULL guiReceiver
+                //   (please create a window) in function 'cvAddText'\n"
+                // Workaround: add text after first imshow
+                opencv::highgui::add_text_with_font(
+                    frame.mat,
+                    "Select Viewport",
+                    opencv::core::Point::new(5, 30),
+                    FONT_NAME,
+                    FONT_SIZE,
+                    opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
+                    0, /* opencv::highgui::QtFontWeights::QT_FONT_NORMAL */
+                    0, /* opencv::highgui::QtFontStyles::QT_STYLE_NORMAL */
+                    0,
+                )
+                .unwrap();
+            }
+
+            opencv::highgui::imshow(window_name, frame.mat).unwrap()
+        });
         let key = opencv::highgui::wait_key(1).unwrap();
         if key > 0 {
             match char::from_u32(key.try_into().unwrap()) {
@@ -117,11 +138,45 @@ pub async fn preview_tracking_boxes(
                 &mut frame.mat,
                 *tracking_box,
                 opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
+                1,
+                8,
+                0,
+            )
+            .unwrap();
+            opencv::imgproc::circle(
+                &mut frame.mat,
+                opencv::core::Point::new(
+                    tracking_box.x + tracking_box.width / 2,
+                    tracking_box.y + tracking_box.height / 2,
+                ),
+                5,
+                opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
+                3,
+                8,
+                0,
+            )
+            .unwrap();
+        });
+    }
+
+    if boxes.len() > 1 {
+        opencv_frame.with_mut(|frame| {
+            opencv::imgproc::line(
+                &mut frame.mat,
+                opencv::core::Point::new(
+                    boxes[0].x + boxes[0].width / 2,
+                    boxes[0].y + boxes[0].height / 2,
+                ),
+                opencv::core::Point::new(
+                    boxes[1].x + boxes[1].width / 2,
+                    boxes[1].y + boxes[1].height / 2,
+                ),
+                opencv::core::Scalar::new(0f64, -1f64, -1f64, -1f64),
                 2,
                 8,
                 0,
             )
-            .unwrap()
+            .unwrap();
         });
     }
 

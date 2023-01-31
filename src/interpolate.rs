@@ -1,6 +1,9 @@
 use log::error;
 
-pub fn interpolate_score(raw_score: Vec<mint::Point2<i32>>, frame_step_size: u32) -> Option<Vec<mint::Point2<i32>>> {
+pub fn interpolate_score(
+    raw_score: Vec<mint::Point2<i32>>,
+    frame_step_size: u32,
+) -> Option<Vec<mint::Point2<i32>>> {
     let raw_score_vec = raw_score
         .iter()
         .map(|item| (item.x as f64, item.y as f64))
@@ -20,13 +23,15 @@ pub fn interpolate_score(raw_score: Vec<mint::Point2<i32>>, frame_step_size: u32
             .calc_spline(&opts.num_of_segments(frame_step_size - 1))
             .unwrap();
 
-        Some(calculated_points
-            .into_inner()
-            .iter()
-            .map(|item| mint::Point2 {
-                x: item.x as i32,
-                y: item.y as i32,
-            })
-            .collect())
+        Some(
+            calculated_points
+                .into_inner()
+                .iter()
+                .map(|item| mint::Point2 {
+                    x: item.x as i32,
+                    y: item.y as i32,
+                })
+                .collect(),
+        )
     }
 }

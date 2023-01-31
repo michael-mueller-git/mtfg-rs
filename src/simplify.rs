@@ -1,5 +1,3 @@
-
-
 pub fn rdp(score: Vec<mint::Point2<i32>>, epsilon: f64) -> Vec<mint::Point2<i32>> {
     let mut keep = (0..score.len()).collect();
 

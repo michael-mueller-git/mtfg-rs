@@ -3,10 +3,10 @@ mod ffmpeg;
 mod funscript;
 mod interpolate;
 mod logging;
+mod simplify;
 mod tracker;
 mod trajectories;
 mod ui;
-mod simplify;
 
 use log::error;
 
