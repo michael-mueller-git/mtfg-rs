@@ -16,3 +16,11 @@ cargo +nightly build --release
 ## What is the current goal of this project?
 
 - Implement only the most necessary functions needed to create a funscript with a opencv video tracker.
+
+## TODO
+
+### Cross Compiling
+
+- https://packages.msys2.org/package/mingw-w64-x86_64-opencv
+- https://github.com/twistedfall/opencv-rust/issues/333
+- https://github.com/nix-community/naersk/tree/master/examples/cross-windows
