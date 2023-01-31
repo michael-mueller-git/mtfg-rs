@@ -24,7 +24,7 @@ pub struct Funscript {
 }
 
 impl Funscript {
-    pub fn new(video_fps: f32, start_time_in_ms: f32, score: Vec<&mint::Point2<i32>>) -> Self {
+    pub fn new(video_fps: f32, start_time_in_ms: f32, score: Vec<mint::Point2<i32>>) -> Self {
         Self {
             video_fps,
             start_time_in_ms,
@@ -33,7 +33,7 @@ impl Funscript {
     }
 
     fn to_funscript_content(
-        score: Vec<&mint::Point2<i32>>,
+        score: Vec<mint::Point2<i32>>,
         video_fps: f32,
         start_time_in_ms: f32,
     ) -> FunscriptContent {

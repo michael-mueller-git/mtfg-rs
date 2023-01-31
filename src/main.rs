@@ -1,13 +1,14 @@
 mod args;
 mod ffmpeg;
 mod funscript;
+mod interpolate;
 mod logging;
 mod tracker;
 mod trajectories;
 mod ui;
+mod simplify;
 
 use log::error;
-use log::info;
 
 const WINDOW_NAME: &'static str = "mtfg-rs";
 const CHANNEL_CAPACITY: usize = 64;
@@ -19,6 +20,11 @@ async fn main() {
     };
 
     logging::setup_logging();
+
+    let Ok(video_fps) = ffmpeg::get_video_fps(args.input.as_str()) else {
+        error!("Could not determine video fps");
+        return;
+    };
 
     let preview_frame = ffmpeg::get_single_frame(&args.input.as_str(), args.start_time as u32)
         .await
@@ -47,12 +53,7 @@ async fn main() {
 
     let (frame_tx, mut frame_rx) =
         tokio::sync::mpsc::channel::<ffmpeg::FFmpegFrame>(CHANNEL_CAPACITY);
-    frame_sender.push(frame_tx);
-
-    let Ok(video_fps) = ffmpeg::get_video_fps(args.input.as_str()) else {
-        error!("could not determine video fps");
-        return;
-    };
+    frame_sender.push(frame_tx); // preview
 
     let ffmpeg_args = args.clone();
     tokio::task::spawn_blocking(move || {
@@ -61,7 +62,7 @@ async fn main() {
     });
 
     let Some(mut frame) = frame_rx.recv().await else {
-        error!("extract first frame failed");
+        error!("Extract first frame failed");
         return;
     };
 
@@ -74,10 +75,10 @@ async fn main() {
                     tokio::runtime::Handle::current().block_on(tracker::track_feature(b, r, p));
                 });
             } else {
-                error!("not enough sender obj available");
+                error!("Not enough sender obj available");
             }
         } else {
-            error!("not enough receiver obj available");
+            error!("Not enough receiver obj available");
         }
     }
 
@@ -90,7 +91,7 @@ async fn main() {
         let mut result = vec![];
         for item in tracking_receiver.iter_mut() {
             let Some(tracking_box) = item.recv().await else {
-                error!("tracking box missing");
+                error!("Tracking box missing");
                 continue;
             };
             result.push(tracking_box);
@@ -130,48 +131,13 @@ async fn main() {
         Some(0),
     );
 
-    let raw_score_vec = raw_score
-        .iter()
-        .map(|item| (item.x as f64, item.y as f64))
-        .collect::<Vec<_>>();
+    let Some(interpolated_score) = interpolate::interpolate_score(raw_score, args.frame_step_size) else {
+        error!("Create funscript FAILED");
+        return;
+    };
 
-    let mut interploated_score: Vec<mint::Point2<i32>> = raw_score;
-    if args.frame_step_size > 1 {
-        let opts = cubic_spline::SplineOpts::new().tension(0.5); // TODO hyperparam
-
-        let Ok(points) = cubic_spline::Points::try_from(&raw_score_vec) else {
-            error!("Create Interpolation failed");
-            return;
-        };
-
-        let calculated_points = points
-            .calc_spline(&opts.num_of_segments(args.frame_step_size - 1))
-            .unwrap();
-
-        interploated_score = calculated_points
-            .into_inner()
-            .iter()
-            .map(|item| mint::Point2 {
-                x: item.x as i32,
-                y: item.y as i32,
-            })
-            .collect();
-    }
-
-    let mut keep = (0..interploated_score.len()).collect();
-
-    if args.epsilon > 0.01 {
-        keep = ramer_douglas_peucker::rdp(&interploated_score, args.epsilon);
-    }
-
-    let score = interploated_score
-        .iter()
-        .enumerate()
-        .filter(|(idx, _)| keep.contains(idx))
-        .map(|(_, val)| val)
-        .collect::<Vec<_>>();
+    let score = simplify::rdp(interpolated_score, args.epsilon);
 
     let mut funscript = funscript::Funscript::new(video_fps, args.start_time, score);
     funscript.save(args.output.as_str());
-    info!("program exit");
 }
