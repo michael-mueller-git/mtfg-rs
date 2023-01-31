@@ -213,7 +213,7 @@ pub async fn spawn_ffmpeg_frame_reader(
     });
 
     if let Some(input) = input {
-        if stdin.write_all(&input).await.is_err() {
+        if stdin.write_all(input).await.is_err() {
             error!("ffmpeg stdin failed");
         }
     }
@@ -322,7 +322,7 @@ pub async fn transform_frame<'a>(
             "-",
         ],
         output_dimensions,
-        Some(&frame.as_rgb8().unwrap()),
+        Some(frame.as_rgb8().unwrap()),
     )
     .await;
 
@@ -393,7 +393,7 @@ pub async fn ffmpeg_stream_reader(
         None => 0,
     };
 
-    let Some(video_dimensions) = get_dimension_from_video_filter(&args.video_filter.as_str()) else {
+    let Some(video_dimensions) = get_dimension_from_video_filter(args.video_filter.as_str()) else {
         error!("Failed to parse video filter dimensions");
         return;
     };

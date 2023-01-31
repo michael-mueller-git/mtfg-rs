@@ -4,7 +4,7 @@ use image::DynamicImage;
 use log::error;
 use log::info;
 
-const FONT_NAME: &'static str = "Hack";
+const FONT_NAME: &str = "Hack";
 const FONT_SIZE: i32 = 18;
 
 pub async fn get_rois(
@@ -79,7 +79,7 @@ pub async fn get_vr_viewport(
             .replace("{fov}", format!("{fov}").as_str())
             .replace("{pitch}", format!("{pitch}").as_str())
             .replace("{yaw}", format!("{yaw}").as_str());
-        let mut projection = ffmpeg::transform_frame(frame, &video_filter.as_str())
+        let mut projection = ffmpeg::transform_frame(frame, video_filter.as_str())
             .await
             .unwrap()
             .unwrap();

@@ -10,7 +10,7 @@ mod ui;
 
 use log::error;
 
-const WINDOW_NAME: &'static str = "mtfg-rs";
+const WINDOW_NAME: &str = "mtfg-rs";
 const CHANNEL_CAPACITY: usize = 64;
 
 #[tokio::main(worker_threads = 6)]
@@ -26,13 +26,13 @@ async fn main() {
         return;
     };
 
-    let preview_frame = ffmpeg::get_single_frame(&args.input.as_str(), args.start_time as u32)
+    let preview_frame = ffmpeg::get_single_frame(args.input.as_str(), args.start_time as u32)
         .await
         .unwrap()
         .unwrap();
 
     args.video_filter =
-        ui::get_vr_viewport(WINDOW_NAME, &*preview_frame.image, args.video_filter).await;
+        ui::get_vr_viewport(WINDOW_NAME, &preview_frame.image, args.video_filter).await;
 
     let mut frame_sender = vec![];
     let mut frame_receiver = vec![];
