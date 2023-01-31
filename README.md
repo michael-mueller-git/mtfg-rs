@@ -24,3 +24,4 @@ cargo +nightly build --release
 - https://packages.msys2.org/package/mingw-w64-x86_64-opencv
 - https://github.com/twistedfall/opencv-rust/issues/333
 - https://github.com/nix-community/naersk/tree/master/examples/cross-windows
+- https://git.m-labs.hk/astro/nix-scripts/commit/a808a5d0900010e1c30de0afaa912fc6597840b2#diff-189c3d27cb167dbd8ca910a72cdeec174d418885
