@@ -16,7 +16,7 @@ indoc = "1.0"
 log = "0.4"
 log4rs = "1.2"
 mint = "0.5"
-opencv = "0.74"
+opencv = { version = "0.74" }
 ramer_douglas_peucker = "0.2"
 regex = "1.7"
 serde = { version = "1.0", features = ["derive"] }
