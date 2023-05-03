@@ -34,7 +34,7 @@
 , eigen
 , enableBlas ? false
 , blas
-, enableContrib ? false
+, enableContrib ? true
 
 , enableCuda ? (config.cudaSupport or false) && stdenv.hostPlatform.isx86_64
 , cudaPackages ? { }
@@ -316,14 +316,15 @@ stdenv.mkDerivation {
     "-DBUILD_opencv_features2d=OFF"
     "-DBUILD_opencv_flann=OFF"
     "-DBUILD_opencv_gapi=OFF"
-    "-DBUILD_opencv_highgui=OFF"
+    "-DBUILD_opencv_highgui=ON"
     "-DBUILD_opencv_ml=OFF"
     "-DBUILD_opencv_objdetect=OFF"
     "-DBUILD_opencv_photo=OFF"
     "-DBUILD_opencv_stitching=OFF"
     "-DBUILD_opencv_ts=OFF"
-    "-DBUILD_opencv_video=OFF"
-    "-DBUILD_opencv_videoio=OFF"
+    "-DBUILD_opencv_video=ON"
+    "-DBUILD_opencv_videoio=ON"
+    "-DBUILD_opencv_tracking=ON"
     # "-DBUILD_opencv_world=ON"
     "-DOPENCV_GENERATE_PKGCONFIG=ON"
     "-DWITH_OPENMP=ON"

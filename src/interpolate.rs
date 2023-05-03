@@ -1,4 +1,4 @@
-use log::error;
+// use log::error;
 
 pub fn interpolate_score(
     raw_score: Vec<mint::Point2<i32>>,
@@ -12,6 +12,10 @@ pub fn interpolate_score(
     if frame_step_size <= 1 {
         Some(raw_score)
     } else {
+        /*
+
+        // TODO cross compiling of cubic_spline package failes
+
         let opts = cubic_spline::SplineOpts::new().tension(0.5); // TODO hyperparam
 
         let Ok(points) = cubic_spline::Points::try_from(&raw_score_vec) else {
@@ -33,5 +37,7 @@ pub fn interpolate_score(
                 })
                 .collect(),
         )
+        */
+        Some(raw_score)
     }
 }
