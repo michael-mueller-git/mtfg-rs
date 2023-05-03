@@ -8,8 +8,8 @@
 
   outputs = { self, nixpkgs, rust-overlay, ... }:
     let
-      myapp = "poe-system";
-      rust-version = "1.64.0";
+      myapp = "mtfg-rs";
+      rust-version = "1.65.0";
       overlays = [ rust-overlay.overlays.default ];
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system overlays; };
@@ -26,7 +26,6 @@
           targets = [ "x86_64-pc-windows-gnu" ];
         })
         rust-analyzer
-        vscodium
         dbus
         xorg.libxcb
         opencv-win
@@ -67,6 +66,8 @@
         shellHook = ''
           export PATH=$PATH:$HOME/.cargo/bin
           #export CC=clang AR=llvm-ar CXX=clang++
+          # bash build.sh
+          # exit
         '';
       };
     };

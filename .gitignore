@@ -3,3 +3,4 @@ tests/data
 logs/
 *.png
 mingw64/
+host_build.txt
