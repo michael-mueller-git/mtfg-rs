@@ -65,9 +65,8 @@
 
         shellHook = ''
           export PATH=$PATH:$HOME/.cargo/bin
-          #export CC=clang AR=llvm-ar CXX=clang++
-          # bash build.sh
-          # exit
+          bash build.sh
+          exit
         '';
       };
     };

@@ -320,15 +320,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a81dae078cea95a014a339291cec439d2f232ebe854a9d672b796c6afafa9b7"
 
 [[package]]
-name = "cubic_spline"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38c63da2494d1333c977518cc40874f5ea0361538163355993544c1e4115abf3"
-dependencies = [
- "wasm-bindgen",
-]
-
-[[package]]
 name = "cxx"
 version = "1.0.94"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -959,7 +950,6 @@ version = "0.0.1"
 dependencies = [
  "bytes",
  "clap",
- "cubic_spline",
  "fortify",
  "fraction",
  "futures",

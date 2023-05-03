@@ -7,7 +7,6 @@ description = "Motion Tracking Funscript Generator"
 [dependencies]
 bytes = "1.3"
 clap = { version = "4", features = ["derive"] }
-cubic_spline = "1.0"
 fortify = "0.4"
 fraction = "0.13"
 futures = "0.3"
