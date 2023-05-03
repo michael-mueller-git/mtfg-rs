@@ -1,51 +1,81 @@
+
+# flake.nix
 {
+  description = "My cute Rust crate!";
+
   inputs = {
-    nixpkgs = {
-      url = "github:nixos/nixpkgs/nixos-unstable";
-    };
-    flake-utils = {
-      url = "github:numtide/flake-utils";
-    };
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    naersk.url = "github:nmattia/naersk";
+    naersk.inputs.nixpkgs.follows = "nixpkgs";
   };
-  outputs = { nixpkgs, flake-utils, ... }: flake-utils.lib.eachDefaultSystem (system:
+
+  outputs = { self, nixpkgs, naersk }:
     let
-      pkgs = import nixpkgs {
-        inherit system;
+      cargoToml = (builtins.fromTOML (builtins.readFile ./Cargo.toml));
+      supportedSystems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" ];
+      forAllSystems = f: nixpkgs.lib.genAttrs supportedSystems (system: f system);
+    in
+    {
+      overlay = final: prev: {
+        "${cargoToml.package.name}" = final.callPackage ./. { inherit naersk; };
       };
-      mtfg-rs = (with pkgs; stdenv.mkDerivation {
-          pname = "mtfg-rs";
-          version = "0.0.1";
-          src = fetchgit {
-            url = "https://github.com/michael-mueller-git/mtfg-rs.git";
-            rev = "77dcce345985e8f62fe606915536519ca48cbdd7";
-            sha256 = "sha256-067V0XolutU9UfSXaWd9jbu3WgqUPUBDMtQWWlOVxnM=";
-            fetchSubmodules = true;
+
+      packages = forAllSystems (system:
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [
+              self.overlay
+            ];
           };
-          nativeBuildInputs = [
-            clang
-            cargo
-            qt6.full
-            opencv
-          ];
-          buildPhase = "cargo build  --release";
-          installPhase = ''
-            mkdir -p $out/bin
-            mv target/release/mtfg-rs mtfg-rs $out/bin
+        in
+        {
+          "${cargoToml.package.name}" = pkgs."${cargoToml.package.name}";
+        });
+
+
+      defaultPackage = forAllSystems (system: (import nixpkgs {
+        inherit system;
+        overlays = [ self.overlay ];
+      })."${cargoToml.package.name}");
+
+      checks = forAllSystems (system:
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [
+              self.overlay
+            ];
+          };
+        in
+        {
+          format = pkgs.runCommand "check-format"
+            {
+              buildInputs = with pkgs; [ rustfmt cargo ];
+            } ''
+            ${pkgs.rustfmt}/bin/cargo-fmt fmt --manifest-path ${./.}/Cargo.toml -- --check
+            ${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt --check ${./.}
+            touch $out # it worked!
           '';
-        }
-      );
-    in rec {
-      defaultApp = flake-utils.lib.mkApp {
-        drv = defaultPackage;
-      };
-      defaultPackage = mtfg-rs;
-      devShell = pkgs.mkShell {
-        buildInputs = [
-          mtfg-rs
-          pkgs.qt6.full
-          pkgs.opencv
-        ];
-      };
-    }
-  );
+          "${cargoToml.package.name}" = pkgs."${cargoToml.package.name}";
+        });
+      devShell = forAllSystems (system:
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [ self.overlay ];
+          };
+        in
+        pkgs.mkShell {
+          inputsFrom = with pkgs; [
+            pkgs."${cargoToml.package.name}"
+          ];
+          buildInputs = with pkgs; [
+            rustfmt
+            nixpkgs-fmt
+          ];
+          LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
+        });
+    };
 }
+
