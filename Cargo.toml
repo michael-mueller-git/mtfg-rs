@@ -2,6 +2,7 @@
 name = "mtfg-rs"
 version = "0.0.1"
 edition = "2021"
+description = "Motion Tracking Funscript Generator"
 
 [dependencies]
 bytes = "1.3"
