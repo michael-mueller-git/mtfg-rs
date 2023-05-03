@@ -10,7 +10,9 @@
 , rustfmt
 , cargo
 , rustc
-  , llvmPackages
+, llvmPackages
+, opencv
+, clang
 }:
 
 let
@@ -26,6 +28,8 @@ naersk.lib."${targetPlatform.system}".buildPackage rec {
     cargo
     rustc
     libiconv
+    opencv
+    clang
   ];
   checkInputs = [ cargo rustc ];
 
@@ -34,7 +38,7 @@ naersk.lib."${targetPlatform.system}".buildPackage rec {
   RUST_BACKTRACE = "full";
   copyLibs = true;
 
-  LIBCLANG_PATH = "${llvmPackages.libclang}/lib";
+  LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
 
   name = cargoToml.package.name;
   version = cargoToml.package.version;
