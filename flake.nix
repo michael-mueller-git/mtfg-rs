@@ -1,82 +1,73 @@
-
-# flake.nix
 {
-  description = "My cute Rust crate!";
+  description = "rust workspace";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    naersk.url = "github:nmattia/naersk";
-    naersk.inputs.nixpkgs.follows = "nixpkgs";
+    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+    rust-overlay.url = "github:oxalica/rust-overlay";
   };
 
-  outputs = { self, nixpkgs, naersk }:
+  outputs = { self, nixpkgs, rust-overlay, ... }:
     let
-      cargoToml = (builtins.fromTOML (builtins.readFile ./Cargo.toml));
-      supportedSystems = [ "x86_64-linux" ];
-      forAllSystems = f: nixpkgs.lib.genAttrs supportedSystems (system: f system);
+      myapp = "poe-system";
+      rust-version = "1.64.0";
+      overlays = [ rust-overlay.overlays.default ];
+      system = "x86_64-linux";
+      pkgs = import nixpkgs { inherit system overlays; };
+      pkgsMingw = pkgs.pkgsCross.mingwW64;
+      lib = pkgs.lib;
+
+      opencv-win = pkgsMingw.callPackage ./opencv-win.nix {
+        pthreads = pkgsMingw.windows.mingw_w64_pthreads;
+      };
+      buildPlatformInputs = with pkgs; [
+        (rust-bin.stable.${rust-version}.default.override {
+          extensions =
+            [ "rust-src" "llvm-tools-preview" "rust-analysis" ];
+          targets = [ "x86_64-pc-windows-gnu" ];
+        })
+        rust-analyzer
+        vscodium
+        dbus
+        xorg.libxcb
+        opencv-win
+
+        pkgsMingw.windows.mcfgthreads
+      ];
+
+      opencv = pkgs.opencv;
+      wineLibPaths = (builtins.map (a: ''${a};'') [
+        "${pkgsMingw.stdenv.cc.cc}/x86_64-w64-mingw32/lib/"
+        "${pkgsMingw.windows.mcfgthreads}/bin/"
+      ]) ++ [ "${opencv-win}/bin/" ];
+      winePath = builtins.foldl' (x: y: x+y) "" wineLibPaths;
+
     in
     {
-      overlay = final: prev: {
-        "${cargoToml.package.name}" = final.callPackage ./. { inherit naersk; };
+      packages.${system}.opencv-win = opencv-win;
+      devShells.${system}.default = pkgsMingw.mkShell {
+        packages = buildPlatformInputs;
+        buildInputs = buildPlatformInputs;
+        depsBuildBuild = with pkgs; [
+          llvmPackages.clang
+        ];
+        WIN_PTHREADS = "${pkgsMingw.windows.mingw_w64_pthreads}/lib";
+        RUSTFLAGS = (builtins.map (a: ''-L ${a}/lib'') [
+          pkgsMingw.windows.mcfgthreads
+        ]) ++ (builtins.map (a: ''-l ${a}'') [
+          "mcfgthread"
+        ]);
+        CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUNNER = "${pkgs.wineWowPackages.stable}/bin/wine64";
+        OPENCV_INCLUDE_PATHS = "${opencv-win}/include/opencv4";
+        OPENCV_LINK_PATHS = "${opencv-win}/lib";
+        OPENCV_LINK_LIBS = "opencv_core470,opencv_imgproc470,opencv_imgcodecs470";
+        OPENCV_DISABLE_PROBES = "vcpkg_cmake,vcpkg,cmake";
+        LIBCLANG_PATH = "${pkgs.llvmPackages_11.libclang.lib}/lib";
+        WINEPATH = winePath;
+
+        shellHook = ''
+          export PATH=$PATH:$HOME/.cargo/bin
+          #export CC=clang AR=llvm-ar CXX=clang++
+        '';
       };
-
-      packages = forAllSystems (system:
-        let
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [
-              self.overlay
-            ];
-          };
-        in
-        {
-          "${cargoToml.package.name}" = pkgs."${cargoToml.package.name}";
-        });
-
-
-      defaultPackage = forAllSystems (system: (import nixpkgs {
-        inherit system;
-        overlays = [ self.overlay ];
-      })."${cargoToml.package.name}");
-
-      checks = forAllSystems (system:
-        let
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [
-              self.overlay
-            ];
-          };
-        in
-        {
-          format = pkgs.runCommand "check-format"
-            {
-              buildInputs = with pkgs; [ rustfmt cargo opencv ];
-            } ''
-            ${pkgs.rustfmt}/bin/cargo-fmt fmt --manifest-path ${./.}/Cargo.toml -- --check
-            ${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt --check ${./.}
-            touch $out # it worked!
-          '';
-          "${cargoToml.package.name}" = pkgs."${cargoToml.package.name}";
-        });
-      devShell = forAllSystems (system:
-        let
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [ self.overlay ];
-          };
-        in
-        pkgs.mkShell {
-          inputsFrom = with pkgs; [
-            pkgs."${cargoToml.package.name}"
-          ];
-          buildInputs = with pkgs; [
-            rustfmt
-            nixpkgs-fmt
-            opencv
-          ];
-          LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
-        });
     };
 }
-
