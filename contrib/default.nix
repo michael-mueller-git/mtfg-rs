@@ -12,6 +12,7 @@
 , llvmPackages
 , opencv
 , clang
+, pkgs
 }:
 
 let
@@ -30,6 +31,7 @@ naersk.lib."${targetPlatform.system}".buildPackage rec {
     opencv
     clang
   ];
+  nativeBuildInputs = with pkgs; [ pkgsStatic.stdenv.cc ];
   checkInputs = [ cargo rustc ];
 
   doCheck = true;
