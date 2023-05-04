@@ -21,11 +21,7 @@ let
   common = {
     version = "0.0.1";
 
-    nativeBuildInputs = [ pkgs.pkg-config pkgs.clang ];
-    buildInputs = with pkgs; [
-      opencv
-      clang
-    ];
+    nativeBuildInputs = [ pkgs.pkg-config pkgs.clang pkgs.libcxx ];
     PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
     LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
     OPENCV_INCLUDE_PATHS = "${pkgs.opencv}/include/opencv4";
