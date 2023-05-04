@@ -9,7 +9,7 @@
 
   outputs = { self, nixpkgs, naersk }:
     let
-      cargoToml = (builtins.fromTOML (builtins.readFile ./Cargo.toml));
+      cargoToml = (builtins.fromTOML (builtins.readFile ../Cargo.toml));
       supportedSystems = [ "x86_64-linux" ];
       forAllSystems = f: nixpkgs.lib.genAttrs supportedSystems (system: f system);
     in
