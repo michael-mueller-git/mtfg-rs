@@ -1004,9 +1004,9 @@ dependencies = [
 
 [[package]]
 name = "opencv-binding-generator"
-version = "0.52.0"
+version = "0.56.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "082d8259f4a7ea455e3553f9a1bc817520eb465a153bbf5ec0cb0b73590ee28d"
+checksum = "7b294df42f60a25f619429bb14c01836c83dc58a0fddcb98e521245a94ddcc3b"
 dependencies = [
  "clang",
  "clang-sys",
@@ -1016,6 +1016,7 @@ dependencies = [
  "percent-encoding",
  "regex",
 ]
+
 
 [[package]]
 name = "ordered-float"
