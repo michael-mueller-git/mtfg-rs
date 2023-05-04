@@ -231,6 +231,7 @@ pub async fn get_single_frame(
     timestamp_in_ms: u32,
 ) -> Result<Option<FFmpegFrame>, Box<dyn std::error::Error>> {
     let Ok(video_dimensions) = get_video_dimensions(video_path) else {
+        error!("Invalid video dimensions");
         return Ok(None);
     };
 
