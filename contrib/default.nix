@@ -10,6 +10,7 @@ let
   common = {
     version = "0.0.1";
 
+    CARGO_NET_GIT_FETCH_WITH_CLI=true;
     CARGO_LOG="trace";
     nativeBuildInputs = [ pkgs.pkg-config pkgs.clang pkgs.libcxx ];
     PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
