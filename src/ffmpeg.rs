@@ -273,6 +273,7 @@ pub async fn get_single_frame(
         .expect("ffmpeg: parse frame error");
         Ok(Some(FFmpegFrame::new(frame_buffer)))
     } else {
+        warn!("No data in ffmpeg output buffer");
         Ok(None)
     }
 }
