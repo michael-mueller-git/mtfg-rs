@@ -21,7 +21,7 @@ let
   common = {
     version = "0.0.1";
 
-    nativeBuildInputs = [ pkgs.pkg-config ];
+    nativeBuildInputs = [ pkgs.pkg-config pkgs.clang ];
     buildInputs = with pkgs; [
       opencv
       clang
