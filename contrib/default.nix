@@ -38,6 +38,10 @@ naersk.lib."${targetPlatform.system}".buildPackage rec {
   copyLibs = true;
 
   LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
+  OPENCV_INCLUDE_PATHS = "${opencv}/include/opencv4";
+  OPENCV_LINK_PATHS = "${opencv}/lib";
+  OPENCV_LINK_LIBS = "opencv_highgui470,opencv_videoio470,opencv_video470,opencv_imgcodecs470,opencv_imgproc470,opencv_core470,opencv_tracking470,opencv_img_hash470,opencv_bioinspired470,opencv_line_descriptor470";
+  OPENCV_DISABLE_PROBES = "vcpkg_cmake,vcpkg,cmake";
 
   name = cargoToml.package.name;
   version = cargoToml.package.version;
