@@ -15,7 +15,7 @@
 }:
 
 let
-  cargoToml = (builtins.fromTOML (builtins.readFile ./Cargo.toml));
+  cargoToml = (builtins.fromTOML (builtins.readFile ../Cargo.toml));
 in
 
 naersk.lib."${targetPlatform.system}".buildPackage rec {
