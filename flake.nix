@@ -66,6 +66,7 @@
         shellHook = ''
           export PATH=$PATH:$HOME/.cargo/bin
           cargo build --release --target x86_64-pc-windows-gnu
+          cp -fv ${opencv-win}/bin/* target/x86_64-pc-windows-gnu/release
           exit $?
         '';
       };
