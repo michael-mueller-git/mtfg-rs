@@ -65,8 +65,8 @@
 
         shellHook = ''
           export PATH=$PATH:$HOME/.cargo/bin
-          bash build.sh
-          exit
+          bash build-win.sh
+          exit $?
         '';
       };
     };
