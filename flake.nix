@@ -65,7 +65,7 @@
 
         shellHook = ''
           export PATH=$PATH:$HOME/.cargo/bin
-          bash build-win.sh
+          cargo build --release --target x86_64-pc-windows-gnu
           exit $?
         '';
       };
