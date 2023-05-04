@@ -26,10 +26,11 @@ async fn main() {
         return;
     };
 
-    let preview_frame = ffmpeg::get_single_frame(args.input.as_str(), args.start_time as u32)
-        .await
-        .unwrap()
-        .unwrap();
+    let Ok(Some(preview_frame)) = ffmpeg::get_single_frame(args.input.as_str(), args.start_time as u32)
+        .await else {
+            error!("Failed to extract first frame");
+        return;
+    };
 
     args.video_filter =
         ui::get_vr_viewport(WINDOW_NAME, &preview_frame.image, args.video_filter).await;
