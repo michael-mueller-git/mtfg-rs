@@ -1,61 +1,26 @@
 {
-  description = "My cute Rust crate!";
+  description = "A flake for building a Rust workspace using buildRustPackage.";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    naersk.url = "github:nmattia/naersk";
-    naersk.inputs.nixpkgs.follows = "nixpkgs";
+    rust-overlay.url = "github:oxalica/rust-overlay";
+    flake-utils.follows = "rust-overlay/flake-utils";
+    nixpkgs.follows = "rust-overlay/nixpkgs";
   };
 
-  outputs = { self, nixpkgs, naersk }:
-    let
-      cargoToml = (builtins.fromTOML (builtins.readFile ../Cargo.toml));
-      supportedSystems = [ "x86_64-linux" ];
-      forAllSystems = f: nixpkgs.lib.genAttrs supportedSystems (system: f system);
-    in
-    {
-      overlay = final: prev: {
-        "${cargoToml.package.name}" = final.callPackage ./. { inherit naersk; };
-      };
-
-      packages = forAllSystems (system:
-        let
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [
-              self.overlay
-            ];
+  outputs = inputs: with inputs;
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = nixpkgs.legacyPackages.${system};
+        code = pkgs.callPackage ./. { inherit nixpkgs system rust-overlay; };
+      in rec {
+        packages = {
+          app = code.app;
+          all = pkgs.symlinkJoin {
+            name = "all";
+            paths = with code; [ app ];
           };
-        in
-        {
-          "${cargoToml.package.name}" = pkgs."${cargoToml.package.name}";
-        });
-
-
-      defaultPackage = forAllSystems (system: (import nixpkgs {
-        inherit system;
-        overlays = [ self.overlay ];
-      })."${cargoToml.package.name}");
-
-      devShell = forAllSystems (system:
-        let
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [ self.overlay ];
-          };
-        in
-        pkgs.mkShell {
-          inputsFrom = with pkgs; [
-            pkgs."${cargoToml.package.name}"
-          ];
-          buildInputs = with pkgs; [
-            rustfmt
-            nixpkgs-fmt
-            opencv
-          ];
-          LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
-        });
-    };
+        default = packages.all;
+        };
+      }
+    );
 }
-
-
