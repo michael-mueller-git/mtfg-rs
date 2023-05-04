@@ -26,9 +26,8 @@ async fn main() {
         return;
     };
 
-    let Ok(Some(preview_frame)) = ffmpeg::get_single_frame(args.input.as_str(), args.start_time as u32)
-        .await else {
-            error!("Failed to extract first frame");
+    let Ok(Some(preview_frame)) = ffmpeg::get_single_frame(args.input.as_str(), args.start_time as u32).await else {
+        error!("Failed to extract first frame");
         return;
     };
 
