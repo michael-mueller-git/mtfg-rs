@@ -7,17 +7,6 @@ let
 
   rustVersion = "1.65.0";
 
-  wasmTarget = "x86_64-unknown-linux-gnu";
-
-  rustWithWasmTarget = rustPkgs.rust-bin.stable.${rustVersion}.default.override {
-    targets = [ wasmTarget ];
-  };
-
-  rustPlatformWasm = makeRustPlatform {
-    cargo = rustWithWasmTarget;
-    rustc = rustWithWasmTarget;
-  };
-
   common = {
     version = "0.0.1";
 
