@@ -989,6 +989,7 @@ dependencies = [
  "futures-util",
  "image",
  "indoc",
+ "libc",
  "log",
  "log4rs",
  "mentat",
