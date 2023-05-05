@@ -4,15 +4,6 @@
     crane.url = "github:ipetkov/crane";
     crane.inputs.nixpkgs.follows = "nixpkgs";
     flake-utils.url = "github:numtide/flake-utils";
-      nixpkgs.overlays = [
-        (self: super: {
-          yabai = super.opencv.overrideAttrs (old: rec {
-            buildInputs = old.buildInputs ++ [pkgs.qt5.full];
-            cmakeFlags = old.cmakeFlags ++ ["-DWITH_QT=ON"];
-          });
-        })
-      ];
-  };
 
   outputs = { self, nixpkgs, crane, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
@@ -21,6 +12,15 @@
 
         pkgs = import nixpkgs {
           inherit system;
+overlays = [
+        (self: super: {
+          yabai = super.opencv.overrideAttrs (old: rec {
+            buildInputs = old.buildInputs ++ [pkgs.qt5.full];
+            cmakeFlags = old.cmakeFlags ++ ["-DWITH_QT=ON"];
+          });
+        })
+      ];
+
         };
         craneLib = crane.lib.${system};
       in
