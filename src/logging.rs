@@ -1,4 +1,7 @@
+extern crate tempdir;
+
 use indoc::indoc;
+use tempdir::TempDir;
 
 pub fn setup_logging() {
     let mut log_file_path = std::env::current_exe().unwrap();
@@ -33,7 +36,13 @@ root:
 
     let log_file_path_str = log_file_path.as_os_str();
     if !std::path::Path::new(log_file_path_str).exists() {
-        std::fs::write(log_file_path_str, default_config).expect("Unable to write default logfile");
+        // TODO nix can not write to the application directory
+        // Ugly workaround below
+        let tmp_dir = TempDir::new("mtfg-rs").expect("Failed to create tmp log configuration");
+        let tmp_log_config = tmp_dir.path().join("log4rs.yaml");
+        std::fs::write(&tmp_log_config, default_config).expect("Unable to write default logfile");
+        log4rs::init_file(tmp_log_config, Default::default()).unwrap();
+        return
     }
 
     log4rs::init_file(log_file_path, Default::default()).unwrap();

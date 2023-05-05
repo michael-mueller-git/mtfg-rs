@@ -23,6 +23,7 @@ serde_json = "1.0"
 tokio = { version = "1", features = ["full"] }
 tokio-util = { version = "0.7", features = ["full"] }
 mentat = "0.0.4"
+tempdir = "0.3"
 
 # bindings-generator strict dependencies
 libc = "=0.2.139"
