@@ -16,7 +16,8 @@ indoc = "1.0"
 log = "0.4"
 log4rs = "1.2"
 mint = "0.5"
-opencv = { version = "0.77" }
+libc = "=0.2.139"
+opencv = { version = "0.72.1" }
 ramer_douglas_peucker = "0.2"
 regex = "1.7"
 serde = { version = "1.0", features = ["derive"] }
@@ -24,4 +25,3 @@ serde_json = "1.0"
 tokio = { version = "1", features = ["full"] }
 tokio-util = { version = "0.7", features = ["full"] }
 mentat = "0.0.4"
-libc = "0.2"
