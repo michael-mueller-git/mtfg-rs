@@ -1,28 +1,21 @@
 {
   inputs = {
-    cargo2nix.url = "github:cargo2nix/cargo2nix/release-0.11.0";
-    flake-utils.follows = "cargo2nix/flake-utils";
-    nixpkgs.follows = "cargo2nix/nixpkgs";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    crane.url = "github:ipetkov/crane";
+    crane.inputs.nixpkgs.follows = "nixpkgs";
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = inputs: with inputs;
+  outputs = { self, nixpkgs, crane, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs {
-          inherit system;
-          overlays = [cargo2nix.overlays.default];
-        };
-
-        rustPkgs = pkgs.rustBuilder.makePackageSet {
-          rustVersion = "1.65.0";
-          packageFun = import ./Cargo.nix;
-        };
-
-      in rec {
-        packages = {
-          mtfg-rs = (rustPkgs.workspace.mtfg-rs {}).bin;
-          default = packages.mtfg-rs;
-        };
-      }
-    );
+        craneLib = crane.lib.${system};
+      in
+    {
+      packages.default = craneLib.buildPackage {
+        src = craneLib.cleanCargoSource (craneLib.path ./.);
+        buildInputs = [];
+        nativeBuildInputs = [];
+      };
+    });
 }
