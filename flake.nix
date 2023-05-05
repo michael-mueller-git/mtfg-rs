@@ -14,8 +14,8 @@
     {
       packages.default = craneLib.buildPackage {
         src = craneLib.cleanCargoSource (craneLib.path ./.);
-        buildInputs = [];
-        nativeBuildInputs = [];
+        buildInputs = [ pkgs.opencv ];
+        nativeBuildInputs = [ pkgs.clang ];
       };
     });
 }
