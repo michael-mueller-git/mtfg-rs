@@ -14,8 +14,8 @@
            overlays = [
             (self: super: {
               opencv = super.opencv.overrideAttrs (old: rec {
-                buildInputs = old.buildInputs ++ [pkgs.qt5.full];
-                cmakeFlags = old.cmakeFlags ++ ["-DWITH_QT=ON"];
+                buildInputs = old.buildInputs ++ [pkgs.qt6.full];
+                cmakeFlags = old.cmakeFlags ++ ["-DWITH_QT=6"];
               });
             })
           ];

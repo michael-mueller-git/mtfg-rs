@@ -4,3 +4,4 @@ logs/
 *.png
 mingw64/
 host_build.txt
+result
