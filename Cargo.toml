@@ -17,7 +17,7 @@ log = "0.4"
 log4rs = "1.2"
 mint = "0.5"
 libc = "=0.2.139"
-opencv = { version = "0.72.1" }
+opencv = { version = "0.80" }
 ramer_douglas_peucker = "0.2"
 regex = "1.7"
 serde = { version = "1.0", features = ["derive"] }
