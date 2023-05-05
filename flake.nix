@@ -10,6 +10,7 @@
   outputs = { self, nixpkgs, crane, flake-utils, rust-overlay, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
+        rust-version = "1.65.0";
         overlays = [
           rust-overlay.overlays.default
           (self: super: {
