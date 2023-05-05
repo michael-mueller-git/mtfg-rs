@@ -30,3 +30,5 @@ cargo build --release
 ```bash
 nix develop ".#build-windows"
 ```
+
+NOTE: The windows binary is currently broken. The ffmpeg process is not able to extract the frame data on windows.
