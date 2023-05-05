@@ -17,7 +17,6 @@
         src = craneLib.cleanCargoSource (craneLib.path ./.);
         buildInputs = [ pkgs.opencv ];
         nativeBuildInputs = [ pkgs.pkg-config pkgs.clang ];
-        OPENCV_DISABLE_PROBES = "vcpkg_cmake,vcpkg,cmake";
         LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
       };
     });
