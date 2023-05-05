@@ -20,5 +20,5 @@ cargo +nightly build --release
 ## Cross Compiling (Windows)
 
 ```bash
-nix develop
+nix develop ".#build-windows"
 ```
