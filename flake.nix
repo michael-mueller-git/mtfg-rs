@@ -54,7 +54,7 @@
         LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
       };
 
-      devShells.${system}.windows = pkgsMingw.mkShell {
+      devShells.windows = pkgsMingw.mkShell {
         packages = buildWindowsPlatformInputs;
         buildInputs = buildWindowsPlatformInputs;
         depsBuildBuild = with pkgs; [
