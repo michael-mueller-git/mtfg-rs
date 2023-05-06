@@ -121,5 +121,5 @@ if [ "$arg1" = "--latest" ]; then
 fi
 
 if [ $nix_setup -gt 0 ]; then
-    echo "You may need to restart you computer to get mtfg-rs working"
+    echo "You need to restart you computer to get mtfg-rs working"
 fi
