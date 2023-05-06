@@ -11,7 +11,7 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         name = "mtfg-rs";
-        version = "0.0.2"; # must match version in Cargot.toml
+        version = "0.0.2"; # must match version in Cargo.toml
         rev = "00d5e1bdf9328123ecf0c4c18da31ac14f437803";
         git = "https://github.com/michael-mueller-git/mtfg-rs";
         rust-version = "1.65.0";
