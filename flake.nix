@@ -11,10 +11,11 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         name = "mtfg-rs";
-        version = "0.0.1";
-        rev = "87be796b4c7d8a819e224b6345ca7c27a38659ff";
+        version = "0.0.2";
+        rev = "6d18a42bdba416eb55c5ed8bb8036175dbe58a9c";
         git = "https://github.com/michael-mueller-git/mtfg-rs";
         rust-version = "1.65.0";
+
         overlays = [
           rust-overlay.overlays.default
           (self: super: {
@@ -24,15 +25,19 @@
             });
           })
         ];
+
         pkgs = import nixpkgs {
           inherit system overlays;
         };
+
         craneLib = crane.lib.${system};
 
         pkgsMingw = pkgs.pkgsCross.mingwW64;
+
         opencv-win = pkgsMingw.callPackage ./opencv-win.nix {
           pthreads = pkgsMingw.windows.mingw_w64_pthreads;
         };
+
         buildWindowsPlatformInputs = with pkgs; [
           (rust-bin.stable.${rust-version}.default.override {
             extensions = [ "rust-src" "llvm-tools-preview" "rust-analysis" ];
@@ -44,10 +49,12 @@
           opencv-win
           pkgsMingw.windows.mcfgthreads
         ];
+
         wineLibPaths = (builtins.map (a: ''${a};'') [
           "${pkgsMingw.stdenv.cc.cc}/x86_64-w64-mingw32/lib/"
           "${pkgsMingw.windows.mcfgthreads}/bin/"
         ]) ++ [ "${opencv-win}/bin/" ];
+
         winePath = builtins.foldl' (x: y: x + y) "" wineLibPaths;
 
         mtfg-rs-release-artifact = craneLib.downloadCargoPackageFromGit {
