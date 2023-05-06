@@ -13,6 +13,7 @@
         name = "mtfg-rs";
         version = "0.0.1";
         rev = "87be796b4c7d8a819e224b6345ca7c27a38659ff";
+        git = "https://github.com/michael-mueller-git/mtfg-rs";
         rust-version = "1.65.0";
         overlays = [
           rust-overlay.overlays.default
@@ -49,11 +50,9 @@
         ]) ++ [ "${opencv-win}/bin/" ];
         winePath = builtins.foldl' (x: y: x + y) "" wineLibPaths;
 
-        mtfg-rs-release = craneLib.downloadCargoPackageFromGit {
-          inherit rev;
-          git = "https://github.com/michael-mueller-git/mtfg-rs";
+        mtfg-rs-release-artifact = craneLib.downloadCargoPackageFromGit {
+          inherit rev git;
         };
-
 
         mtfg-rs-linux-latest = craneLib.buildPackage {
           src = craneLib.cleanCargoSource (craneLib.path ./.);
@@ -64,7 +63,7 @@
 
         mtfg-rs-linux-release = craneLib.buildPackage {
           inherit name version;
-          src = craneLib.cleanCargoSource (craneLib.path "${mtfg-rs-release}/${name}-${version}");
+          src = craneLib.cleanCargoSource (craneLib.path "${mtfg-rs-release-artifact}/${name}-${version}");
           buildInputs = [ pkgs.opencv ];
           nativeBuildInputs = [ pkgs.pkg-config pkgs.clang ];
           LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
