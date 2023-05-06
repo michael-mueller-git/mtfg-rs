@@ -10,6 +10,7 @@
   outputs = { self, nixpkgs, crane, flake-utils, rust-overlay, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
+        name = "mtfg-rs";
         rust-version = "1.65.0";
         overlays = [
           rust-overlay.overlays.default
@@ -47,9 +48,18 @@
         winePath = builtins.foldl' (x: y: x+y) "" wineLibPaths;
       in
     {
-      packages.${system}.opencv-win = opencv-win;
+      formatter = nixpkgs.legacyPackages.x86_64-linux.nixpkgs-fmt;
+      packages.opencv-win = opencv-win;
+
       packages.default = craneLib.buildPackage {
         src = craneLib.cleanCargoSource (craneLib.path ./.);
+        buildInputs = [ pkgs.opencv ];
+        nativeBuildInputs = [ pkgs.pkg-config pkgs.clang ];
+        LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
+      };
+
+      packages.mtfg-rs = craneLib.buildPackage {
+        src = craneLib.downloadCargoPackageFromGit { git = "https://github.com/michael-mueller-git/mtfg-rs"; rev = "87be796b4c7d8a819e224b6345ca7c27a38659ff"; };
         buildInputs = [ pkgs.opencv ];
         nativeBuildInputs = [ pkgs.pkg-config pkgs.clang ];
         LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
@@ -78,10 +88,12 @@
         shellHook = ''
           export PATH=$PATH:$HOME/.cargo/bin
           cargo build --release --target x86_64-pc-windows-gnu
+          export BUILD_RESULT_CODE=$?
+          mkdir -p target/x86_64-pc-windows-gnu/release
           cp -fv ${opencv-win}/bin/*.dll target/x86_64-pc-windows-gnu/release
           cp -fv ${pkgsMingw.stdenv.cc.cc}/x86_64-w64-mingw32/lib/*.dll target/x86_64-pc-windows-gnu/release
           cp -fv ${pkgsMingw.windows.mcfgthreads}/bin/*.dll target/x86_64-pc-windows-gnu/release
-          exit $?
+          exit $BUILD_RESULT_CODE
         '';
       };
     });
