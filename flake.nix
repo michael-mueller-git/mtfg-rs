@@ -11,10 +11,13 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         name = "mtfg-rs";
-        version = "0.0.2"; # must match version in Cargo.toml
-        rev = "00d5e1bdf9328123ecf0c4c18da31ac14f437803";
+        release-version = "0.0.2"; # must match version in Cargo.toml
+        release-rev = "00d5e1bdf9328123ecf0c4c18da31ac14f437803";
         git = "https://github.com/michael-mueller-git/mtfg-rs";
         rust-version = "1.65.0";
+
+        cargoToml = (builtins.fromTOML (builtins.readFile ./Cargo.toml));
+        cargo-name = "${cargoToml.package.name}";
 
         overlays = [
           rust-overlay.overlays.default
@@ -58,32 +61,35 @@
         winePath = builtins.foldl' (x: y: x + y) "" wineLibPaths;
 
         mtfg-rs-release-artifact = craneLib.downloadCargoPackageFromGit {
-          inherit rev git;
+          inherit git;
+          rev = "${release-rev}";
         };
 
-        mtfg-rs-linux-latest = craneLib.buildPackage {
+        mtfg-rs-build-args = {
+          buildInputs = [ pkgs.opencv ];
+          nativeBuildInputs = [ pkgs.pkg-config pkgs.clang ];
+          LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
+        };
+
+        mtfg-rs-linux-latest = craneLib.buildPackage (mtfg-rs-build-args // {
           src = craneLib.cleanCargoSource (craneLib.path ./.);
-          buildInputs = [ pkgs.opencv ];
-          nativeBuildInputs = [ pkgs.pkg-config pkgs.clang ];
-          LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
-        };
+        });
 
-        mtfg-rs-linux-release = craneLib.buildPackage {
-          inherit name version;
-          src = craneLib.cleanCargoSource (craneLib.path "${mtfg-rs-release-artifact}/${name}-${version}");
-          buildInputs = [ pkgs.opencv ];
-          nativeBuildInputs = [ pkgs.pkg-config pkgs.clang ];
-          LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
-        };
+        mtfg-rs-linux-release = craneLib.buildPackage (mtfg-rs-build-args // {
+          inherit name;
+          version = "${release-version}";
+          src = craneLib.cleanCargoSource (craneLib.path "${mtfg-rs-release-artifact}/${name}-${release-version}");
+        });
 
       in
       {
         formatter = nixpkgs.legacyPackages.x86_64-linux.nixpkgs-fmt;
 
         packages.default = mtfg-rs-linux-latest;
-        packages.opencv-win = opencv-win;
         packages.latest = mtfg-rs-linux-latest;
         packages.release = mtfg-rs-linux-release;
+
+        packages.opencv-win = opencv-win;
 
         devShells.build-windows = pkgsMingw.mkShell {
           packages = buildWindowsPlatformInputs;

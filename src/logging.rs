@@ -42,7 +42,7 @@ root:
         let tmp_log_config = tmp_dir.path().join("log4rs.yaml");
         std::fs::write(&tmp_log_config, default_config).expect("Unable to write default logfile");
         log4rs::init_file(tmp_log_config, Default::default()).unwrap();
-        return
+        return;
     }
 
     log4rs::init_file(log_file_path, Default::default()).unwrap();
