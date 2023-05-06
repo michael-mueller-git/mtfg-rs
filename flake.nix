@@ -12,7 +12,7 @@
       let
         name = "mtfg-rs";
         version = "0.0.2"; # must match version in Cargot.toml
-        rev = "6d18a42bdba416eb55c5ed8bb8036175dbe58a9c";
+        rev = "00d5e1bdf9328123ecf0c4c18da31ac14f437803";
         git = "https://github.com/michael-mueller-git/mtfg-rs";
         rust-version = "1.65.0";
 
