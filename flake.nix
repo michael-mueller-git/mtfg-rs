@@ -11,6 +11,8 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         name = "mtfg-rs";
+        version = "0.0.1";
+        rev = "87be796b4c7d8a819e224b6345ca7c27a38659ff";
         rust-version = "1.65.0";
         overlays = [
           rust-overlay.overlays.default
@@ -46,24 +48,36 @@
           "${pkgsMingw.windows.mcfgthreads}/bin/"
         ]) ++ [ "${opencv-win}/bin/" ];
         winePath = builtins.foldl' (x: y: x + y) "" wineLibPaths;
-      in
-      {
-        formatter = nixpkgs.legacyPackages.x86_64-linux.nixpkgs-fmt;
-        packages.opencv-win = opencv-win;
 
-        packages.default = craneLib.buildPackage {
+        mtfg-rs-release = craneLib.downloadCargoPackageFromGit {
+          inherit rev;
+          git = "https://github.com/michael-mueller-git/mtfg-rs";
+        };
+
+
+        mtfg-rs-linux-latest = craneLib.buildPackage {
           src = craneLib.cleanCargoSource (craneLib.path ./.);
           buildInputs = [ pkgs.opencv ];
           nativeBuildInputs = [ pkgs.pkg-config pkgs.clang ];
           LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
         };
 
-        packages.mtfg-rs = craneLib.buildPackage {
-          src = craneLib.downloadCargoPackageFromGit { git = "https://github.com/michael-mueller-git/mtfg-rs"; rev = "87be796b4c7d8a819e224b6345ca7c27a38659ff"; };
+        mtfg-rs-linux-release = craneLib.buildPackage {
+          inherit name version;
+          src = craneLib.cleanCargoSource (craneLib.path "${mtfg-rs-release}/${name}-${version}");
           buildInputs = [ pkgs.opencv ];
           nativeBuildInputs = [ pkgs.pkg-config pkgs.clang ];
           LIBCLANG_PATH = "${pkgs.llvmPackages.libclang.lib}/lib";
         };
+
+      in
+      {
+        formatter = nixpkgs.legacyPackages.x86_64-linux.nixpkgs-fmt;
+
+        packages.default = mtfg-rs-linux-latest;
+        packages.opencv-win = opencv-win;
+        packages.latest = mtfg-rs-linux-latest;
+        packages.release = mtfg-rs-linux-release;
 
         devShells.build-windows = pkgsMingw.mkShell {
           packages = buildWindowsPlatformInputs;
