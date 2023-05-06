@@ -69,17 +69,17 @@ function binding.start_funscript_generator()
     local args = {}
 
     if platform == "Linux" then
-        cmd = ofs.ExtensionDir() .. "/mtfg-rs"
+        cmd = ofs.ExtensionDir() .. "/mtfg-rs/mtfg-rs.sh"
     else
         print("ERROR: Platform Not Implemented (", platform, ")")
         return
     end
 
-    table.insert(args, "-s")
+    table.insert(args, "--start")
     table.insert(args, tostring(math.floor(currentTime*1000)))
-    table.insert(args, "-i")
+    table.insert(args, "--input")
     table.insert(args, video)
-    table.insert(args, "-o")
+    table.insert(args, "--output")
     table.insert(args, tmpFile)
     table.insert(args, "--epsilon")
     table.insert(args, tostring(epsilon))
@@ -91,7 +91,7 @@ function binding.start_funscript_generator()
     table.insert(args, filterValues[filterIdx])
 
     if next_action then
-        table.insert(args, "-e")
+        table.insert(args, "--end")
         table.insert(args, tostring(math.floor(next_action.at*1000.0)))
     end
 
