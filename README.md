@@ -25,7 +25,7 @@ The package can also compiled with standalone cargo. Keep in mind that the appli
 cargo build --release
 ```
 
-### Windows (Cross Comping)
+### Windows (Cross Compiling)
 
 ```bash
 nix develop ".#build-windows"
