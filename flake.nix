@@ -12,7 +12,7 @@
       let
         name = "mtfg-rs";
         release-version = "0.0.3"; # must match version in Cargo.toml
-        release-rev = "00d5e1bdf9328123ecf0c4c18da31ac14f437803";
+        release-rev = "0866d97e0baed68078059488cee007d7e4226479";
         git = "https://github.com/michael-mueller-git/mtfg-rs";
         rust-version = "1.65.0";
 
