@@ -1,6 +1,6 @@
 [package]
 name = "mtfg-rs"
-version = "0.0.2"
+version = "0.0.3"
 edition = "2021"
 description = "Motion Tracking Funscript Generator"
 
