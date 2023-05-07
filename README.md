@@ -9,13 +9,17 @@ mtfg-rs is a rust rewrite of the Motion Tracking Funscript Generator (MTFG) Add-
 
 ## What is the current goal of this project?
 
-- Implement only the most necessary functions needed to create a funscript with a opencv video tracker.
+- Implement only the most necessary functions needed to create a funscript with a OpenCV video tracker.
+
+## Setup
+
+Execute the installer script from `./contrib/Installer` to setup OpenFunscripter with mtfg-rs Add-On on your computer. The application need the [nix package manager](https://nixos.org/download.html) installed on your system. The first setup need to compile some libraries witch take a few minutes.
 
 ## Usage
 
-I recommend to use the nix flake from this repository to use the application. Use the wrapper script `mtfg-rs.sh` to start the application. During the first setup the application may need to compile some libraries, which may take a few minutes (depending on the speed of your computer).
+The installer add the Extension `mtfg-rs` to your OpenFunscripter menu where you can control the application.
 
-## Compile
+## Compile (Experts and Developer)
 
 ### Linux native
 
